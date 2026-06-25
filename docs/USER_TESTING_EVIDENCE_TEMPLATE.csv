@@ -1,0 +1,4 @@
+participant_id,creator_type,input_language,output_language,time_minutes,projects_added,factlock_items,accepted,edited,kept_original,unsupported_facts_found,satisfaction_1_to_5,feedback_quote
+P01,Artist,English,English,,,,,,,,,,
+P02,Writer,Urdu,English,,,,,,,,,,
+P03,Student,English,English,,,,,,,,,,
