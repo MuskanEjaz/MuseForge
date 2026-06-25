@@ -1,6 +1,10 @@
 # MuseForge — Fact-Locked AI Portfolio Builder
 
 <p align="center">
+  <img src="docs/readme-assets/museforge-landing-preview.png" alt="MuseForge landing page preview" width="900" />
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/DEMO-Link%20Coming%20Soon-6d28d9?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Demo coming soon" />
   <img src="https://img.shields.io/badge/LIVE-Link%20Coming%20Soon-16a34a?style=for-the-badge&logo=vercel&logoColor=white" alt="Live link coming soon" />
 </p>
