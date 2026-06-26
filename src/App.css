@@ -7515,3 +7515,62 @@ body:has(.form-with-image),
     max-height: 300px !important;
   }
 }
+
+/* ===== Professional password eye inside password field only ===== */
+.auth-input-wrap {
+  position: relative !important;
+}
+
+.auth-input-wrap input {
+  width: 100% !important;
+}
+
+.auth-input-wrap .auth-password-toggle {
+  position: absolute !important;
+  right: 14px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+
+  color: #8b6adf !important;
+  cursor: pointer !important;
+  z-index: 3 !important;
+}
+
+.auth-input-wrap .auth-password-toggle svg {
+  width: 21px !important;
+  height: 21px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.auth-input-wrap .auth-password-toggle:hover {
+  color: #6d3fe6 !important;
+}
+
+.auth-input-wrap .auth-password-toggle:focus-visible {
+  outline: 2px solid rgba(124, 58, 237, 0.25) !important;
+  outline-offset: 2px !important;
+  border-radius: 50% !important;
+}
+
+/* only password wrapper with eye needs right padding */
+.auth-input-wrap:has(.auth-password-toggle) input {
+  padding-right: 48px !important;
+}

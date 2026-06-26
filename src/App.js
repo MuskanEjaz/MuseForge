@@ -1485,6 +1485,7 @@ function WelcomeScreen({ onLogin }) {
 }
 
 function AuthScreen({ mode, onBack, onSwitch, onSubmit, onGoogleSubmit, onForgotPassword, loading, error, notice }) {
+  const [showPassword, setShowPassword] = useState(false);
   const isSignup = mode === 'signup';
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [localError, setLocalError] = useState('');
@@ -1635,7 +1636,27 @@ function AuthScreen({ mode, onBack, onSwitch, onSubmit, onGoogleSubmit, onForgot
           </label>
           <label>
             <span>Password</span>
-            <div className="auth-input-wrap"><span aria-hidden="true">♙</span><input type="password" autoComplete={isSignup ? 'new-password' : 'current-password'} minLength={8} value={form.password} onChange={event => update('password', event.target.value)} placeholder="At least 8 characters" required /></div>
+            <div className="auth-input-wrap"><span aria-hidden="true">♙</span>< input type={showPassword ? "text" : "password"} autoComplete={isSignup ? 'new-password' : 'current-password'} minLength={8} value={form.password} onChange={event => update('password', event.target.value)} placeholder="At least 8 characters" required /><button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setShowPassword(prev => !prev)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M3 3l18 18" />
+                  <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                  <path d="M9.88 5.09A9.8 9.8 0 0 1 12 4.86c5.25 0 8.5 4.64 9.5 7.14a13.4 13.4 0 0 1-2.21 3.31" />
+                  <path d="M6.11 6.11C4.32 7.33 3.1 9.1 2.5 12c1 2.5 4.25 7.14 9.5 7.14a9.7 9.7 0 0 0 4.38-1.06" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2.5 12S5.75 4.86 12 4.86 21.5 12 21.5 12 18.25 19.14 12 19.14 2.5 12 2.5 12Z" />
+                  <circle cx="12" cy="12" r="2.5" />
+                </svg>
+              )}
+          </button>
+          </div>
           </label>
           {!isSignup && <button type="button" className="auth-text-action auth-forgot" onClick={onForgotPassword}>Forgot password?</button>}
           {isSignup && (
