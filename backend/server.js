@@ -2125,56 +2125,6 @@ app.post('/reviews', async (req, res) => {
   }
 });
 
-app.post('/auth/signup', async (req, res) => {
-  const name = cleanText(req.body?.name);
-  const email = normalizeEmail(req.body?.email);
-  const password = String(req.body?.password || '');
-
-  if (name.length < 2) return res.status(400).json({ error: 'Please enter your name.' });
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
-  if (password.length < 8) return res.status(400).json({ error: 'Password must contain at least 8 characters.' });
-
-  const users = readUsers();
-  const existingIndex = users.findIndex(user => normalizeEmail(user.email) === email);
-  const existing = existingIndex >= 0 ? users[existingIndex] : null;
-  if (existing && existing.emailVerified !== false) {
-    return res.status(409).json({ error: 'An account with this email already exists. Please log in or use Forgot password.' });
-  }
-
-  const { salt, hash } = hashPassword(password);
-  const rawVerificationToken = createActionToken();
-  const now = new Date();
-  const user = {
-    ...(existing || {}),
-    id: existing?.id || crypto.randomUUID(),
-    name,
-    email,
-    provider: existing?.provider || 'password',
-    passwordSalt: salt,
-    passwordHash: hash,
-    emailVerified: true,
-    verificationTokenHash: hashActionToken(rawVerificationToken),
-    verificationTokenExpiresAt: new Date(now.getTime() + (24 * 60 * 60 * 1000)).toISOString(),
-    createdAt: existing?.createdAt || now.toISOString(),
-    updatedAt: now.toISOString(),
-  };
-  delete user.password;
-
-  if (existingIndex >= 0) users[existingIndex] = user;
-  else users.push(user);
-  writeUsers(users);
-
-  const verificationEmail = await sendVerificationEmail(user, rawVerificationToken);
-  return res.status(existing ? 200 : 201).json({
-    pendingVerification: true,
-    email: user.email,
-    verificationEmailSent: verificationEmail.sent,
-    message: verificationEmail.sent
-      ? `Account created. We sent a verification link to ${user.email}.`
-      : 'Account created, but email delivery is not configured yet. Complete the email setup, then use Resend verification.',
-    ...(process.env.NODE_ENV === 'test' ? { testVerificationToken: rawVerificationToken } : {}),
-  });
-});
 
 app.post('/auth/signup', async (req, res) => {
   const name = cleanText(req.body?.name);
