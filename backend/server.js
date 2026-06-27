@@ -2279,7 +2279,7 @@ app.post('/auth/forgot-password', async (req, res) => {
 
   // Send reset email for BOTH normal password users and Google-created users.
   // Google users need this so they can set their first password.
-  if (user && user.emailVerified !== false) {
+  if (user) {
     rawResetToken = createActionToken();
 
     users[userIndex] = {
