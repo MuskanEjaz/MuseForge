@@ -2292,30 +2292,6 @@ app.post('/auth/forgot-password', async (req, res) => {
   });
 });
 
-  const users = readUsers();
-  const userIndex = users.findIndex(user => normalizeEmail(user.email) === email);
-  const user = userIndex >= 0 ? users[userIndex] : null;
-  let rawResetToken = '';
-  let resetEmail = { sent: false };
-
-  if (user && user.passwordHash && user.passwordSalt) {
-    rawResetToken = createActionToken();
-    users[userIndex] = {
-      ...user,
-      passwordResetTokenHash: hashActionToken(rawResetToken),
-      passwordResetTokenExpiresAt: new Date(Date.now() + (60 * 60 * 1000)).toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    writeUsers(users);
-    resetEmail = await sendPasswordResetEmail(users[userIndex], rawResetToken);
-  }
-
-  return res.json({
-    message: 'If a password account exists for that email, a reset link has been sent.',
-    emailSent: resetEmail.sent,
-    ...(process.env.NODE_ENV === 'test' && rawResetToken ? { testResetToken: rawResetToken } : {}),
-  });
-});
 
 app.post('/auth/reset-password', async (req, res) => {
   const token = String(req.body?.token || '').trim();
