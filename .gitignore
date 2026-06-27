@@ -7,3 +7,5 @@ backend/.env
 backend/data/
 *.log
 .DS_Store
+
+public/museforge-demo.mp4

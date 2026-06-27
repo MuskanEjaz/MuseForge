@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const DEMO_VIDEO_EMBED_URL = "https://www.youtube.com/embed/mbetuUBiM-I";
 
 const getApiCandidates = () => {
   const candidates = [API_URL];
@@ -1249,7 +1250,7 @@ function PublicPortfolioView({ portfolio, status, error, onHome }) {
     );
   }
 
-  const lines = String(portfolio.portfolio || '').split('\n');
+  const rawPortfolioText = String(portfolio.portfolio || '');
   const contact = normalizeContact(portfolio.contact || {});
   const publicContactLinks = getContactLinks(contact);
   const projects = Array.isArray(portfolio.projects) ? portfolio.projects.filter(p => p?.title) : [];
@@ -1257,6 +1258,32 @@ function PublicPortfolioView({ portfolio, status, error, onHome }) {
   const skills = Array.isArray(portfolio.skills) ? portfolio.skills.filter(Boolean) : [];
   const localized = normalizeLocalizedOutput(portfolio.localizedOutput || {}, { language: portfolio.language, name: portfolio.name, medium: portfolio.medium, projects, customSections, skills });
   const labels = localized.labels;
+  const extractPublicSection = (...headings) => {
+  for (const heading of headings.filter(Boolean)) {
+    const escaped = String(heading).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = rawPortfolioText.match(
+      new RegExp(`(?:^|\\n)#+\\s*${escaped}\\s*\\n([\\s\\S]*?)(?=\\n#+\\s*|$)`, 'i')
+    );
+    if (match?.[1]?.trim()) return match[1].trim();
+      }
+      return '';
+    };
+
+    const publicBioText = stripAiReasoningClient(
+      localized.bio ||
+      localized.description ||
+      portfolio.bio ||
+      portfolio.description ||
+      extractPublicSection(labels.artistBio, labels.about, 'Bio', 'Artist Bio')
+    );
+
+    const publicStatementText = stripAiReasoningClient(
+      localized.artistStatement ||
+      localized.statement ||
+      portfolio.artistStatement ||
+      portfolio.statement ||
+      extractPublicSection(labels.artistStatement, labels.statement, 'Professional Statement', 'Artist Statement', 'Statement')
+    );
   const displayName = pickLocalizedName(localized.name, portfolio.name || 'Creator Portfolio', portfolio.language);
   const displayMedium = localizeClientText(localized.medium || portfolio.medium || '', portfolio.language);
   const displayProjects = applyDisplayLanguageToProjects(withOriginalProjectMedia(localized.projects, projects), portfolio.language);
@@ -1333,14 +1360,19 @@ function PublicPortfolioView({ portfolio, status, error, onHome }) {
             </section>
           )}
 
+          {publicBioText && (
           <section className="public-section public-written-content">
-            {lines.map((line, index) => {
-              if (line.startsWith('## ')) return <h2 key={index}>{translateMarkdownHeading(line, labels)}</h2>;
-              if (line.startsWith('# ')) return <h2 key={index}>{translateMarkdownHeading(line, labels)}</h2>;
-              if (!line.trim()) return <br key={index} />;
-              return <p key={index}>{line}</p>;
-            })}
+            <h2>{labels.artistBio || labels.about || 'Bio'}</h2>
+            <p>{publicBioText}</p>
           </section>
+        )}
+
+        {publicStatementText && publicStatementText !== publicBioText && (
+          <section className="public-section public-written-content">
+            <h2>{labels.artistStatement || labels.statement || 'Statement'}</h2>
+            <p>{publicStatementText}</p>
+          </section>
+        )}
 
           {displayProjects.length > 0 && (
             <section className="public-section">
@@ -1831,6 +1863,7 @@ function App() {
   const [newItemMedia, setNewItemMedia] = useState(null);
   const [creatorDrafts, setCreatorDrafts] = useState({});
   const [showDemoVideo, setShowDemoVideo] = useState(false);
+  const [demoStarted, setDemoStarted] = useState(false);
   const [generationNotice, setGenerationNotice] = useState('');
   const [imageUploadError, setImageUploadError] = useState('');
   const [portfolioLanguage, setPortfolioLanguage] = useState('English');
@@ -3862,13 +3895,31 @@ ${section.items.map(item => `- ${item.heading}${item.desc ? `: ${item.desc}` : '
             <button className="video-modal-close" type="button" onClick={() => setShowDemoVideo(false)} aria-label="Close video">✕</button>
             <div className="video-modal-heading">
               <span>HOW MUSEFORGE WORKS</span>
-              <h2>Build your portfolio in minutes</h2>
+              <h2>See how to build your portfolio in minutes</h2>
             </div>
-            <video controls autoPlay playsInline preload="metadata" poster={`${process.env.PUBLIC_URL}/all.png`}>
-              <source src={`${process.env.PUBLIC_URL}/museforge-demo.mp4`} type="video/mp4" />
-              Your browser does not support HTML5 video.
-            </video>
-            <p>Place your demo file at <code>public/museforge-demo.mp4</code>.</p>
+            {!demoStarted ? (
+              <button
+                type="button"
+                className="demo-video-frame demo-video-preview"
+                onClick={() => setDemoStarted(true)}
+                aria-label="Play MuseForge demo video"
+              >
+                <img src="/all-original-rectangular.png" alt="MuseForge demo preview" />
+                <span className="demo-play-button">▶</span>
+              </button>
+            ) : (
+              <div className="demo-video-frame">
+                <iframe
+                  src={`${DEMO_VIDEO_EMBED_URL}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+                  title="MuseForge demo video"
+                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                  allowFullScreen
+                  loading="eager"
+                />
+              </div>
+            )}
+
+            <p>Demo video</p>
           </div>
         </div>
       )}

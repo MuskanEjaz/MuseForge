@@ -1367,7 +1367,8 @@ body { overflow-x: hidden; background: var(--mf-soft); }
 .video-modal-close { position:absolute; right:18px; top:18px; width:40px; height:40px; padding:0; border-radius:50%; z-index:2; }
 .video-modal-heading { padding:2px 52px 15px 2px; }
 .video-modal-heading span { color:#8b5cf6; font-size:.7rem; font-weight:850; letter-spacing:.18em; }
-.video-modal-heading h2 { margin:5px 0 0; color:#181a3f; font:800 clamp(1.7rem,3vw,2.6rem)/1.1 Georgia,serif; }
+.video-modal-heading h2 { margin:5px 0 0; color:#181a3f; font:800 clamp(1.55rem,2.45vw,2.28rem)/1.08 Georgia,serif;
+white-space: nowrap; }
 .video-modal video { width:100%; max-height:68vh; border-radius:18px; background:#0e0d18; display:block; }
 .video-modal p { margin:12px 2px 0; color:#777b89; font-size:.82rem; }
 .video-modal code { color:#6d28d9; background:#f2ecff; padding:2px 6px; border-radius:5px; }
@@ -7573,4 +7574,123 @@ body:has(.form-with-image),
 /* only password wrapper with eye needs right padding */
 .auth-input-wrap:has(.auth-password-toggle) input {
   padding-right: 48px !important;
+}
+
+.demo-video-frame {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #12091f;
+  box-shadow: 0 18px 45px rgba(80, 30, 150, 0.22);
+  margin-top: 18px;
+}
+
+.demo-video-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* ===== Public portfolio link cleanup only ===== */
+.public-portfolio-page a,
+.public-portfolio-page a:visited,
+.public-portfolio-page a:hover,
+.public-portfolio-page a:active {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+
+.demo-video-preview {
+  position: relative;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  display: block;
+}
+
+.demo-video-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.demo-play-button {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 78px;
+  height: 78px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 2px 8px rgba(60, 35, 100, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  line-height: 1;
+  padding-left: 5px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(8px);
+}
+
+.demo-video-preview:hover .demo-play-button {
+  background: rgba(255, 255, 255, 0.42);
+  transform: translate(-50%, -50%) scale(1.04);
+}
+/* =========================================================
+   MuseForge safety lock: preserve original form visuals + sticky artwork
+   Added after cleanup review. This block intentionally changes only
+   layout stability, not colors, backgrounds, typography, or card styling.
+   ========================================================= */
+.form-with-image {
+  display: grid !important;
+  align-items: flex-start !important;
+  overflow: visible !important;
+}
+
+.app:not(.new-landing-page),
+.app:not(.new-landing-page) main,
+.app:not(.new-landing-page) .form-with-image,
+.app:not(.new-landing-page) .form-fields {
+  overflow: visible !important;
+}
+
+.creator-image-panel {
+  position: sticky !important;
+  position: -webkit-sticky !important;
+  top: 88px !important;
+  align-self: flex-start !important;
+  height: fit-content !important;
+  max-height: calc(100vh - 105px) !important;
+  overflow: hidden !important;
+  z-index: 5 !important;
+}
+
+.creator-image-panel img {
+  width: 100% !important;
+  height: min(560px, calc(100vh - 235px)) !important;
+  min-height: 360px !important;
+  object-fit: contain !important;
+}
+
+@media (max-width: 1100px) {
+  .creator-image-panel {
+    position: relative !important;
+    top: 0 !important;
+    max-height: none !important;
+  }
+
+  .creator-image-panel img {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 420px !important;
+  }
 }
