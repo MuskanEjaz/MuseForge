@@ -2268,6 +2268,8 @@ app.post('/auth/forgot-password', async (req, res) => {
     return res.status(400).json({ error: 'Please enter a valid email address.' });
   }
 
+  console.log('Forgot password requested for:', email);
+
   const users = readUsers();
   const userIndex = users.findIndex(user => normalizeEmail(user.email) === email);
   const user = userIndex >= 0 ? users[userIndex] : null;
@@ -2275,10 +2277,8 @@ app.post('/auth/forgot-password', async (req, res) => {
   let rawResetToken = '';
   let resetEmail = { sent: false };
 
-  // IMPORTANT:
-  // Allow password reset for:
-  // 1. normal password users
-  // 2. Google-created verified users without passwordHash/passwordSalt
+  // Send reset email for BOTH normal password users and Google-created users.
+  // Google users need this so they can set their first password.
   if (user && user.emailVerified !== false) {
     rawResetToken = createActionToken();
 
@@ -2290,7 +2290,16 @@ app.post('/auth/forgot-password', async (req, res) => {
     };
 
     writeUsers(users);
+
     resetEmail = await sendPasswordResetEmail(users[userIndex], rawResetToken);
+
+    if (!resetEmail.sent) {
+      console.error('Password reset email failed:', resetEmail.reason || 'Unknown email error');
+    } else {
+      console.log('Password reset email sent to:', email);
+    }
+  } else {
+    console.log('Forgot password skipped. User not found or not verified:', email);
   }
 
   return res.json({
