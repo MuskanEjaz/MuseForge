@@ -2189,46 +2189,60 @@ app.post('/auth/signup', async (req, res) => {
 
   const users = readUsers();
   const existingIndex = users.findIndex(user => normalizeEmail(user.email) === email);
-  const existing = existingIndex >= 0 ? users[existingIndex] : null;
 
+  if (existingIndex >= 0) {
+    return res.status(409).json({
+      error: 'An account with this email already exists. Please log in or use Forgot password.',
+    });
+  }
 
   const { salt, hash } = hashPassword(password);
+  const rawVerificationToken = createActionToken();
   const now = new Date();
 
   const user = {
-    ...(existing || {}),
-    id: existing?.id || crypto.randomUUID(),
+    id: crypto.randomUUID(),
     name,
     email,
-    provider: existing?.provider || 'password',
+    provider: 'password',
     passwordSalt: salt,
     passwordHash: hash,
-    emailVerified: true,
-    emailVerifiedAt: now.toISOString(),
-    createdAt: existing?.createdAt || now.toISOString(),
+    emailVerified: false,
+    verificationTokenHash: hashActionToken(rawVerificationToken),
+    verificationTokenExpiresAt: new Date(now.getTime() + (24 * 60 * 60 * 1000)).toISOString(),
+    createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   };
 
-  delete user.password;
-  delete user.verificationTokenHash;
-  delete user.verificationTokenExpiresAt;
-  delete user.passwordResetTokenHash;
-  delete user.passwordResetTokenExpiresAt;
-
-  if (existingIndex >= 0) users[existingIndex] = user;
-  else users.push(user);
-
+  users.push(user);
   writeUsers(users);
 
-  return res.status(existing ? 200 : 201).json({
-    token: createAuthToken(user),
-    user: publicUser(user),
-    pendingVerification: false,
-    emailVerified: true,
-    message: 'Account created successfully. You can now start building your portfolio.',
+  const verificationEmail = await sendVerificationEmail(user, rawVerificationToken);
+  const welcomeEmail = await sendWelcomeEmail(user);
+
+  if (!verificationEmail.sent) {
+    console.error('Verification email failed:', verificationEmail.reason || 'Unknown email error');
+  } else {
+    console.log('Verification email sent to:', user.email);
+  }
+
+  if (!welcomeEmail.sent) {
+    console.error('Welcome email failed:', welcomeEmail.reason || 'Unknown email error');
+  } else {
+    console.log('Welcome email sent to:', user.email);
+  }
+
+  return res.status(201).json({
+    pendingVerification: true,
+    email: user.email,
+    verificationEmailSent: verificationEmail.sent,
+    welcomeEmailSent: welcomeEmail.sent,
+    message: verificationEmail.sent
+      ? `Account created. We sent a verification link to ${user.email}.`
+      : 'Account created, but verification email could not be sent. Please use Resend verification.',
+    ...(process.env.NODE_ENV === 'test' ? { testVerificationToken: rawVerificationToken } : {}),
   });
 });
-
 app.post('/auth/resend-verification', async (req, res) => {
   const email = normalizeEmail(req.body?.email);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
