@@ -2245,12 +2245,19 @@ function App() {
         }
         throw new Error(data.error || 'Authentication failed.');
       }
-      if (data.pendingVerification) {
-        setPendingEmail(data.email || email);
-        setAuthNotice(data.message || 'Check your email for the verification link.');
-        setAuthView('verify-pending');
-        return;
-      }
+      if (data.token && data.user) {
+  completeAuthentication(data, mode === 'signup' ? 'Account created successfully.' : 'Logged in successfully.');
+  return;
+}
+
+if (data.pendingVerification) {
+  setPendingEmail(data.email || email);
+  setAuthNotice(data.message || 'Check your email for the verification link.');
+  setAuthView('verify-pending');
+  return;
+}
+
+completeAuthentication(data, mode === 'signup' ? 'Account created successfully.' : 'Logged in successfully.');
       completeAuthentication(data, mode === 'signup' ? 'Account created successfully.' : 'Logged in successfully.');
     } catch (error) {
       setAuthError(readableAuthError(error));
