@@ -2152,7 +2152,7 @@ app.post('/auth/signup', async (req, res) => {
     provider: existing?.provider || 'password',
     passwordSalt: salt,
     passwordHash: hash,
-    emailVerified: false,
+    emailVerified: true,
     verificationTokenHash: hashActionToken(rawVerificationToken),
     verificationTokenExpiresAt: new Date(now.getTime() + (24 * 60 * 60 * 1000)).toISOString(),
     createdAt: existing?.createdAt || now.toISOString(),
