@@ -2168,37 +2168,57 @@ app.post('/auth/signup', async (req, res) => {
   });
 });
 
-app.post('/auth/verify-email', async (req, res) => {
-  const token = String(req.body?.token || '').trim();
-  if (!token) return res.status(400).json({ error: 'Verification token is required.' });
+app.post('/auth/signup', async (req, res) => {
+  const name = cleanText(req.body?.name);
+  const email = normalizeEmail(req.body?.email);
+  const password = String(req.body?.password || '');
 
-  const tokenHash = hashActionToken(token);
+  if (name.length < 2) return res.status(400).json({ error: 'Please enter your name.' });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
+  if (password.length < 8) return res.status(400).json({ error: 'Password must contain at least 8 characters.' });
+
   const users = readUsers();
-  const userIndex = users.findIndex(user => user.verificationTokenHash === tokenHash);
-  const user = userIndex >= 0 ? users[userIndex] : null;
-  const expiresAt = user?.verificationTokenExpiresAt ? Date.parse(user.verificationTokenExpiresAt) : 0;
+  const existingIndex = users.findIndex(user => normalizeEmail(user.email) === email);
+  const existing = existingIndex >= 0 ? users[existingIndex] : null;
 
-  if (!user || !expiresAt || expiresAt < Date.now()) {
-    return res.status(400).json({ error: 'This verification link is invalid or has expired. Please request a new one.' });
+  if (existing && existing.emailVerified !== false) {
+    return res.status(409).json({ error: 'An account with this email already exists. Please log in or use another email.' });
   }
 
-  const verifiedUser = {
-    ...user,
+  const { salt, hash } = hashPassword(password);
+  const now = new Date();
+
+  const user = {
+    ...(existing || {}),
+    id: existing?.id || crypto.randomUUID(),
+    name,
+    email,
+    provider: existing?.provider || 'password',
+    passwordSalt: salt,
+    passwordHash: hash,
     emailVerified: true,
-    emailVerifiedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    emailVerifiedAt: now.toISOString(),
+    createdAt: existing?.createdAt || now.toISOString(),
+    updatedAt: now.toISOString(),
   };
-  delete verifiedUser.verificationTokenHash;
-  delete verifiedUser.verificationTokenExpiresAt;
-  users[userIndex] = verifiedUser;
+
+  delete user.password;
+  delete user.verificationTokenHash;
+  delete user.verificationTokenExpiresAt;
+  delete user.passwordResetTokenHash;
+  delete user.passwordResetTokenExpiresAt;
+
+  if (existingIndex >= 0) users[existingIndex] = user;
+  else users.push(user);
+
   writeUsers(users);
 
-  const welcomeEmail = await sendWelcomeEmail(verifiedUser);
-  return res.json({
-    token: createAuthToken(verifiedUser),
-    user: publicUser(verifiedUser),
-    welcomeEmailSent: welcomeEmail.sent,
-    message: 'Email verified successfully. Welcome to MuseForge!',
+  return res.status(existing ? 200 : 201).json({
+    token: createAuthToken(user),
+    user: publicUser(user),
+    pendingVerification: false,
+    emailVerified: true,
+    message: 'Account created successfully. You can now start building your portfolio.',
   });
 });
 
