@@ -7694,3 +7694,10 @@ body:has(.form-with-image),
     max-height: 420px !important;
   }
 }
+
+/* ===== Global desktop size correction for deployment ===== */
+@media (min-width: 900px) {
+  html {
+    font-size: 90%;
+  }
+}

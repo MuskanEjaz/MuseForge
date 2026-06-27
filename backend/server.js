@@ -17,6 +17,9 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 
+// Railway / Vercel proxy fix for express-rate-limit
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 
@@ -370,9 +373,28 @@ function createMailTransporter() {
   if (!user || !pass || (!service && !host)) return null;
 
   if (service) {
+    const normalizedService = service.toLowerCase();
+    const gmailLike = normalizedService === 'gmail' || user.toLowerCase().includes('@gmail.com');
+
+    if (gmailLike) {
+      return nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        family: 4,
+        auth: { user, pass },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
+      });
+    }
+
     return nodemailer.createTransport({
       service,
       auth: { user, pass },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     });
   }
 
