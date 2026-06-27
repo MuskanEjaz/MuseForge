@@ -2218,7 +2218,6 @@ app.post('/auth/signup', async (req, res) => {
   writeUsers(users);
 
   const verificationEmail = await sendVerificationEmail(user, rawVerificationToken);
-  const welcomeEmail = await sendWelcomeEmail(user);
 
   if (!verificationEmail.sent) {
     console.error('Verification email failed:', verificationEmail.reason || 'Unknown email error');
@@ -2226,21 +2225,65 @@ app.post('/auth/signup', async (req, res) => {
     console.log('Verification email sent to:', user.email);
   }
 
-  if (!welcomeEmail.sent) {
-    console.error('Welcome email failed:', welcomeEmail.reason || 'Unknown email error');
-  } else {
-    console.log('Welcome email sent to:', user.email);
-  }
-
   return res.status(201).json({
     pendingVerification: true,
     email: user.email,
     verificationEmailSent: verificationEmail.sent,
-    welcomeEmailSent: welcomeEmail.sent,
     message: verificationEmail.sent
       ? `Account created. We sent a verification link to ${user.email}.`
       : 'Account created, but verification email could not be sent. Please use Resend verification.',
     ...(process.env.NODE_ENV === 'test' ? { testVerificationToken: rawVerificationToken } : {}),
+  });
+});
+
+app.post('/auth/verify-email', async (req, res) => {
+  const rawToken = String(req.body?.token || '').trim();
+
+  if (!rawToken) {
+    return res.status(400).json({ error: 'Verification token is missing.' });
+  }
+
+  const users = readUsers();
+  const tokenHash = hashActionToken(rawToken);
+  const userIndex = users.findIndex(user => user.verificationTokenHash === tokenHash);
+  const user = userIndex >= 0 ? users[userIndex] : null;
+
+  if (!user) {
+    return res.status(400).json({ error: 'Email verification failed. This link is invalid or has already been used.' });
+  }
+
+  if (user.verificationTokenExpiresAt && Date.parse(user.verificationTokenExpiresAt) < Date.now()) {
+    return res.status(400).json({ error: 'This verification link has expired. Please request a new verification email.' });
+  }
+
+  const verifiedUser = {
+    ...user,
+    emailVerified: true,
+    emailVerifiedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  delete verifiedUser.verificationTokenHash;
+  delete verifiedUser.verificationTokenExpiresAt;
+
+  users[userIndex] = verifiedUser;
+  writeUsers(users);
+
+  const welcomeEmail = await sendWelcomeEmail(verifiedUser);
+
+  if (!welcomeEmail.sent) {
+    console.error('Welcome email failed after verification:', welcomeEmail.reason || 'Unknown email error');
+  } else {
+    console.log('Welcome email sent after verification to:', verifiedUser.email);
+  }
+
+  return res.json({
+    token: createAuthToken(verifiedUser),
+    user: publicUser(verifiedUser),
+    welcomeEmailSent: welcomeEmail.sent,
+    message: welcomeEmail.sent
+      ? 'Email verified successfully. Welcome to MuseForge.'
+      : 'Email verified successfully. You can now log in.',
   });
 });
 app.post('/auth/resend-verification', async (req, res) => {
