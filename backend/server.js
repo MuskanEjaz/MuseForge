@@ -400,11 +400,19 @@ function createMailTransporter() {
 
   const port = Number(process.env.SMTP_PORT || 587);
   const secure = String(process.env.SMTP_SECURE || '').toLowerCase() === 'true' || port === 465;
+
   return nodemailer.createTransport({
     host,
     port,
     secure,
+    family: 4,
     auth: { user, pass },
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
+    tls: {
+      servername: host,
+    },
   });
 }
 
