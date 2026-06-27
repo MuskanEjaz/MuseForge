@@ -2255,9 +2255,42 @@ app.post('/auth/resend-verification', async (req, res) => {
 
 app.post('/auth/forgot-password', async (req, res) => {
   const email = normalizeEmail(req.body?.email);
+
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: 'Please enter a valid email address.' });
   }
+
+  const users = readUsers();
+  const userIndex = users.findIndex(user => normalizeEmail(user.email) === email);
+  const user = userIndex >= 0 ? users[userIndex] : null;
+
+  let rawResetToken = '';
+  let resetEmail = { sent: false };
+
+  // IMPORTANT:
+  // Allow password reset for:
+  // 1. normal password users
+  // 2. Google-created verified users without passwordHash/passwordSalt
+  if (user && user.emailVerified !== false) {
+    rawResetToken = createActionToken();
+
+    users[userIndex] = {
+      ...user,
+      passwordResetTokenHash: hashActionToken(rawResetToken),
+      passwordResetTokenExpiresAt: new Date(Date.now() + (60 * 60 * 1000)).toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    writeUsers(users);
+    resetEmail = await sendPasswordResetEmail(users[userIndex], rawResetToken);
+  }
+
+  return res.json({
+    message: 'If an account exists for that email, a password reset link has been sent.',
+    emailSent: resetEmail.sent,
+    ...(process.env.NODE_ENV === 'test' && rawResetToken ? { testResetToken: rawResetToken } : {}),
+  });
+});
 
   const users = readUsers();
   const userIndex = users.findIndex(user => normalizeEmail(user.email) === email);
