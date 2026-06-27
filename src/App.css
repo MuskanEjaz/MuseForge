@@ -7909,3 +7909,71 @@ body:has(.form-with-image),
     font-size: 1.5rem !important;
   }
 }
+
+/* ===== SAFE FIX: auth screens normal desktop size only ===== */
+@media (min-width: 900px) {
+  .auth-page {
+    min-height: 100vh !important;
+    padding: 28px 18px !important;
+  }
+
+  .auth-card,
+  .auth-action-card {
+    width: min(430px, calc(100% - 32px)) !important;
+    max-width: 430px !important;
+    padding: 30px 32px !important;
+    border-radius: 26px !important;
+  }
+
+  .auth-card h1,
+  .auth-action-card h1 {
+    font-size: 2.35rem !important;
+    line-height: 1.08 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .auth-card .auth-intro,
+  .auth-action-card .auth-intro {
+    font-size: 0.96rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .auth-card label {
+    font-size: 0.88rem !important;
+  }
+
+  .auth-card input {
+    height: 48px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .auth-submit,
+  .auth-secondary-action,
+  .google-auth-button {
+    height: 50px !important;
+    min-height: 50px !important;
+    font-size: 1rem !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.01em !important;
+  }
+
+  .auth-password-toggle {
+    width: 34px !important;
+    height: 34px !important;
+  }
+}
+
+/* keep mobile natural */
+@media (max-width: 899px) {
+  .auth-card,
+  .auth-action-card {
+    width: min(440px, calc(100% - 24px)) !important;
+  }
+
+  .auth-submit,
+  .auth-secondary-action,
+  .google-auth-button {
+    font-size: 0.98rem !important;
+    font-weight: 850 !important;
+  }
+}
