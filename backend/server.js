@@ -2139,9 +2139,6 @@ app.post('/auth/signup', async (req, res) => {
   const existingIndex = users.findIndex(user => normalizeEmail(user.email) === email);
   const existing = existingIndex >= 0 ? users[existingIndex] : null;
 
-  if (existing && existing.emailVerified !== false) {
-    return res.status(409).json({ error: 'An account with this email already exists. Please log in or use another email.' });
-  }
 
   const { salt, hash } = hashPassword(password);
   const now = new Date();
