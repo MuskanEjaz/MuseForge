@@ -7698,11 +7698,23 @@ body:has(.form-with-image),
 /* ===== Global desktop size correction for deployment ===== */
 @media (min-width: 900px) {
   html {
-    font-size: 84% !important;
+    font-size: 76% !important;
   }
 
   body {
-    font-size: 15px !important;
+    font-size: 14px !important;
+  }
+
+  .new-landing-page h1,
+  .app:not(.new-landing-page) h1 {
+    font-size: clamp(2.6rem, 4.4vw, 4.8rem) !important;
+    line-height: 1.02 !important;
+  }
+
+  .new-landing-page h2,
+  .app:not(.new-landing-page) h2 {
+    font-size: clamp(1.8rem, 2.7vw, 3rem) !important;
+    line-height: 1.12 !important;
   }
 
   .new-landing-page .hero,
@@ -7710,55 +7722,122 @@ body:has(.form-with-image),
   .new-landing-page .templates-showcase,
   .new-landing-page .info-section,
   .new-landing-page .reviews-section,
-  .new-landing-page .features-section {
-    max-width: 1180px !important;
+  .new-landing-page .features-section,
+  .new-landing-page .creator-selection,
+  .new-landing-page .creator-grid-wrap {
+    max-width: 1080px !important;
   }
 
   .new-landing-page .templates-showcase,
   .new-landing-page .info-section {
-    width: min(1180px, calc(100% - 56px)) !important;
+    width: min(1080px, calc(100% - 64px)) !important;
+    margin-top: 48px !important;
+    margin-bottom: 48px !important;
   }
 
   .new-landing-page .template-preview-grid,
   .new-landing-page .steps-grid {
-    max-width: 1180px !important;
+    max-width: 1080px !important;
+    gap: 18px !important;
   }
 
   .new-landing-page .creator-card {
-    min-height: 250px !important;
-    padding: 16px 16px 46px !important;
+    min-height: 218px !important;
+    padding: 14px 14px 38px !important;
+    border-radius: 22px !important;
   }
 
   .new-landing-page .creator-card-image {
-    height: 145px !important;
+    height: 120px !important;
+    margin-bottom: 8px !important;
   }
 
   .new-landing-page .creator-card-image img {
-    max-width: 190px !important;
-    height: 135px !important;
-    max-height: 135px !important;
-    transform: scale(1.08) !important;
+    max-width: 160px !important;
+    height: 112px !important;
+    max-height: 112px !important;
+    transform: scale(1.02) !important;
   }
 
   .new-landing-page .creator-card:hover .creator-card-image img {
-    transform: scale(1.08) !important;
+    transform: scale(1.02) !important;
   }
 
-  .auth-card {
-    max-width: 480px !important;
-    padding: 34px 34px !important;
+  .auth-card,
+  .auth-action-card {
+    max-width: 420px !important;
+    padding: 28px 28px !important;
+    border-radius: 24px !important;
   }
 
   .auth-action-card {
-    max-width: 520px !important;
+    max-width: 430px !important;
+  }
+
+  .auth-action-card h1,
+  .auth-card h1 {
+    font-size: clamp(1.8rem, 2.7vw, 2.5rem) !important;
+  }
+
+  .auth-action-icon {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 1.45rem !important;
+  }
+
+  .app:not(.new-landing-page) .form-visible,
+  .app:not(.new-landing-page) .form-with-image {
+    width: min(1080px, calc(100% - 64px)) !important;
+    max-width: 1080px !important;
+    gap: 24px !important;
+  }
+
+  .app:not(.new-landing-page) .form-with-image {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) !important;
+  }
+
+  .app:not(.new-landing-page) .form-fields {
+    min-height: 0 !important;
+    gap: 13px !important;
+  }
+
+  .app:not(.new-landing-page) .creator-image-panel {
+    min-height: 0 !important;
+    max-height: 520px !important;
+  }
+
+  .app:not(.new-landing-page) .creator-image-panel img,
+  .creator-image-panel img {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 390px !important;
+    object-fit: contain !important;
+  }
+
+  .app:not(.new-landing-page) input,
+  .app:not(.new-landing-page) textarea,
+  .app:not(.new-landing-page) select {
+    font-size: 0.95rem !important;
   }
 }
 
 @media (min-width: 1400px) {
   html {
-    font-size: 82% !important;
+    font-size: 72% !important;
+  }
+
+  .new-landing-page .hero,
+  .new-landing-page .landing-hero,
+  .new-landing-page .templates-showcase,
+  .new-landing-page .info-section,
+  .new-landing-page .reviews-section,
+  .new-landing-page .features-section,
+  .app:not(.new-landing-page) .form-visible,
+  .app:not(.new-landing-page) .form-with-image {
+    max-width: 1040px !important;
   }
 }
+
 /* ===== Final auth verification screen polish ===== */
 .auth-page {
   min-height: 100vh !important;
