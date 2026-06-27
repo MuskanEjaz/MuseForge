@@ -416,7 +416,59 @@ function createMailTransporter() {
   });
 }
 
-const mailTransporter = createMailTransporter();
+function parseEmailAddress(value = '') {
+  const text = String(value || '').trim();
+  const match = text.match(/^(.*?)<([^>]+)>$/);
+  if (match) {
+    return {
+      name: match[1].trim().replace(/^["']|["']$/g, '') || 'MuseForge',
+      email: match[2].trim(),
+    };
+  }
+  return {
+    name: 'MuseForge',
+    email: text || 'museforgeteam@gmail.com',
+  };
+}
+
+async function sendWithBrevoApi({ from, to, subject, text, html }) {
+  const apiKey = String(process.env.BREVO_API_KEY || '').trim();
+  if (!apiKey) throw new Error('BREVO_API_KEY is not configured.');
+
+  const sender = parseEmailAddress(from || process.env.MAIL_FROM || 'MuseForge <museforgeteam@gmail.com>');
+  const recipients = Array.isArray(to)
+    ? to
+    : String(to || '').split(',').map(email => email.trim()).filter(Boolean);
+
+  if (!recipients.length) throw new Error('Email recipient is missing.');
+
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'api-key': apiKey,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      sender,
+      to: recipients.map(email => ({ email })),
+      subject: subject || 'MuseForge',
+      htmlContent: html || `<pre>${escapeHtml(text || '')}</pre>`,
+      textContent: text || '',
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || data.error || `Brevo API failed with status ${response.status}`);
+  }
+
+  return { messageId: data.messageId || null };
+}
+
+const mailTransporter = String(process.env.BREVO_API_KEY || '').trim()
+  ? { sendMail: sendWithBrevoApi }
+  : createMailTransporter();
 
 function escapeHtml(value = '') {
   return String(value)
