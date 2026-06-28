@@ -8332,3 +8332,591 @@ body:has(.form-with-image),
 }
 
 /* ===== END CORRECTED SAFE FIX: readable text, clean cards, premium footer ===== */
+/* ===== v23 FINAL TARGETED TEXT SIZE POLISH — APPEND ONLY ===== */
+/* Sirf highlighted landing text sizes + footer polish. No JS/functionality touched. */
+
+/* 1) Navbar greeting + buttons: thora readable */
+.new-landing-page .navbar-user,
+.new-landing-page .navbar-actions button,
+.new-landing-page .navbar-cta,
+.new-landing-page .navbar-logout {
+  font-size: 0.96rem !important;
+  font-weight: 850 !important;
+}
+
+/* 2) Hero highlighted heading + subtitle: one safe size bigger */
+.new-landing-page .hero-heading {
+  max-width: 620px !important;
+  font-size: clamp(2.35rem, 3vw, 3.35rem) !important;
+  line-height: 1.04 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.new-landing-page .hero-subtitle {
+  font-size: 1.05rem !important;
+  line-height: 1.65 !important;
+  font-weight: 560 !important;
+}
+
+/* 3) Hero bottom trust row text */
+.new-landing-page .hero-trust,
+.new-landing-page .hero-trust .trust-item,
+.new-landing-page .trust-item {
+  font-size: 0.95rem !important;
+  line-height: 1.5 !important;
+  font-weight: 650 !important;
+}
+
+/* 4) Reviews empty/card stars: bigger but not cartoon huge */
+.new-landing-page .review-card-stars {
+  font-size: 1.85rem !important;
+  gap: 9px !important;
+  letter-spacing: 1px !important;
+  justify-content: center !important;
+}
+
+.new-landing-page .review-card-stars .star-muted {
+  color: #d2c4fb !important;
+}
+
+.new-landing-page .review-card-stars .star-filled {
+  color: #f59e0b !important;
+  text-shadow: 0 7px 20px rgba(245, 158, 11, 0.22) !important;
+}
+
+.new-landing-page .review-empty-message,
+.new-landing-page .review-card p {
+  font-size: 1.06rem !important;
+  line-height: 1.65 !important;
+}
+
+/* 5) Features cards: heading emoji/icon ke samnay */
+.new-landing-page .info-grid article {
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  grid-template-rows: auto auto !important;
+  column-gap: 16px !important;
+  row-gap: 12px !important;
+  align-items: center !important;
+}
+
+.new-landing-page .info-grid article > span {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  margin: 0 !important;
+  align-self: center !important;
+  justify-self: start !important;
+  width: 48px !important;
+  height: 48px !important;
+  font-size: 1.28rem !important;
+}
+
+.new-landing-page .info-grid article h3 {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  margin: 0 !important;
+  font-size: 1.24rem !important;
+  line-height: 1.28 !important;
+  font-weight: 950 !important;
+}
+
+.new-landing-page .info-grid article p {
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+  margin: 0 !important;
+  font-size: 1.03rem !important;
+  line-height: 1.6 !important;
+  font-weight: 560 !important;
+}
+
+/* 6) Template cards: heading emoji ke samnay */
+.new-landing-page .template-preview-card {
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  grid-template-rows: auto auto !important;
+  column-gap: 16px !important;
+  row-gap: 12px !important;
+  align-items: center !important;
+}
+
+.new-landing-page .template-preview-card .template-emoji,
+.new-landing-page .template-preview-card > span:first-child {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  margin: 0 !important;
+  align-self: center !important;
+  justify-self: start !important;
+  font-size: 2.25rem !important;
+  line-height: 1 !important;
+}
+
+.new-landing-page .template-preview-card strong {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  margin: 0 !important;
+  font-size: 1.24rem !important;
+  line-height: 1.28 !important;
+  font-weight: 950 !important;
+}
+
+.new-landing-page .template-preview-card small {
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+  margin: 0 !important;
+  font-size: 1.03rem !important;
+  line-height: 1.58 !important;
+  font-weight: 560 !important;
+}
+
+/* 7) How It Works cards: sirf size increase, heading emoji/number ke samnay NAHI */
+.new-landing-page .steps-grid article {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+}
+
+.new-landing-page .steps-grid article b {
+  display: block !important;
+  margin: 0 0 2px !important;
+  font-size: 1.8rem !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+}
+
+.new-landing-page .steps-grid article h3 {
+  display: block !important;
+  margin: 0 !important;
+  font-size: 1.24rem !important;
+  line-height: 1.3 !important;
+  font-weight: 950 !important;
+}
+
+.new-landing-page .steps-grid article p {
+  display: block !important;
+  margin: 0 !important;
+  font-size: 1.04rem !important;
+  line-height: 1.6 !important;
+  font-weight: 560 !important;
+}
+
+/* 8) Footer: clean premium, readable, no ugly bubble look */
+.new-landing-page .landing-footer {
+  min-height: 96px !important;
+  margin-top: 46px !important;
+  padding: 30px 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  text-align: center !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(216, 180, 254, 0.22), transparent 42%),
+    linear-gradient(135deg, #12051f 0%, #241047 52%, #341565 100%) !important;
+  border-top: 1px solid rgba(216, 180, 254, 0.24) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.9) !important;
+  font-family: "Segoe UI", Arial, sans-serif !important;
+  font-size: 1.03rem !important;
+  line-height: 1.6 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.035em !important;
+}
+
+.new-landing-page .landing-footer p,
+.new-landing-page .landing-footer span {
+  margin: 0 !important;
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 1.03rem !important;
+  line-height: 1.6 !important;
+  font-weight: 700 !important;
+}
+
+.new-landing-page .landing-footer strong {
+  display: inline !important;
+  margin: 0 3px !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  font-size: 1.08rem !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 0 16px rgba(216, 180, 254, 0.34) !important;
+}
+
+@media (max-width: 760px) {
+  .new-landing-page .hero-heading {
+    font-size: clamp(2rem, 10vw, 2.85rem) !important;
+  }
+
+  .new-landing-page .info-grid article h3,
+  .new-landing-page .template-preview-card strong,
+  .new-landing-page .steps-grid article h3 {
+    font-size: 1.14rem !important;
+  }
+
+  .new-landing-page .info-grid article p,
+  .new-landing-page .template-preview-card small,
+  .new-landing-page .steps-grid article p {
+    font-size: 0.98rem !important;
+  }
+
+  .new-landing-page .review-card-stars {
+    font-size: 1.55rem !important;
+  }
+
+  .new-landing-page .landing-footer {
+    min-height: 104px !important;
+    font-size: 0.92rem !important;
+  }
+}
+
+/* ===== END v23 FINAL TARGETED TEXT SIZE POLISH ===== */
+
+
+
+/* ===== v24 FINAL COMPACT CARDS + PROFESSIONAL FOOTER ===== */
+/* Fixes:
+   1) Template cards heading/text vertical gap reduced.
+   2) How It Works cards: emoji + 01/02/03 same row.
+   3) Footer upgraded to professional app-style footer.
+   JS/functionality untouched.
+*/
+
+/* TEMPLATE / 2ND-LAST CARDS: reduce empty vertical distance */
+.new-landing-page .template-preview-grid {
+  align-items: stretch !important;
+}
+
+.new-landing-page .template-preview-card {
+  min-height: 150px !important;
+  padding: 26px 28px !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  grid-template-rows: auto auto !important;
+  column-gap: 16px !important;
+  row-gap: 14px !important;
+  align-items: center !important;
+  justify-content: start !important;
+}
+
+.new-landing-page .template-preview-card > span:first-child,
+.new-landing-page .template-preview-card .template-emoji {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  margin: 0 !important;
+  align-self: center !important;
+  justify-self: start !important;
+  font-size: 2rem !important;
+  line-height: 1 !important;
+}
+
+.new-landing-page .template-preview-card strong {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  margin: 0 !important;
+  align-self: center !important;
+  font-size: 1.18rem !important;
+  line-height: 1.25 !important;
+  font-weight: 950 !important;
+  color: #1d203d !important;
+}
+
+.new-landing-page .template-preview-card small {
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+  margin: 0 !important;
+  align-self: start !important;
+  font-size: 0.98rem !important;
+  line-height: 1.5 !important;
+  font-weight: 560 !important;
+  color: #63697a !important;
+}
+
+/* HOW IT WORKS / LAST CARDS: emoji + number same row, compact height */
+.new-landing-page .steps-grid {
+  align-items: stretch !important;
+}
+
+.new-landing-page .steps-grid article {
+  min-height: 150px !important;
+  padding: 26px 28px !important;
+  display: grid !important;
+  grid-template-columns: auto auto 1fr !important;
+  grid-template-rows: auto auto !important;
+  column-gap: 14px !important;
+  row-gap: 12px !important;
+  align-items: center !important;
+  justify-content: start !important;
+}
+
+.new-landing-page .steps-grid article > span:first-child,
+.new-landing-page .steps-grid article .step-icon {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  margin: 0 !important;
+  align-self: center !important;
+  justify-self: start !important;
+  width: 46px !important;
+  height: 46px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border-radius: 14px !important;
+  background: #f4efff !important;
+  font-size: 1.28rem !important;
+  line-height: 1 !important;
+}
+
+.new-landing-page .steps-grid article b {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+  align-self: center !important;
+  justify-self: start !important;
+  color: #a78bfa !important;
+  font-size: 1.42rem !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+}
+
+.new-landing-page .steps-grid article h3 {
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+  margin: 0 0 2px !important;
+  font-size: 1.18rem !important;
+  line-height: 1.25 !important;
+  font-weight: 950 !important;
+  color: #1d203d !important;
+}
+
+.new-landing-page .steps-grid article p {
+  grid-column: 1 / -1 !important;
+  grid-row: 3 !important;
+  margin: 0 !important;
+  font-size: 0.98rem !important;
+  line-height: 1.5 !important;
+  font-weight: 560 !important;
+  color: #63697a !important;
+}
+
+/* If card markup uses icon div instead of span, still keep first visual item inline */
+.new-landing-page .steps-grid article > :first-child {
+  align-self: center !important;
+}
+
+/* PROFESSIONAL FOOTER */
+.new-landing-page .landing-footer {
+  margin-top: 52px !important;
+  padding: 28px 22px !important;
+  min-height: 92px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 9px !important;
+  flex-wrap: wrap !important;
+  text-align: center !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.22), transparent 38%),
+    linear-gradient(135deg, #12091f 0%, #21103d 48%, #32165d 100%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 -18px 45px rgba(76, 29, 149, 0.10) !important;
+  color: rgba(255,255,255,0.82) !important;
+  font-family: "Segoe UI", Arial, sans-serif !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.new-landing-page .landing-footer p,
+.new-landing-page .landing-footer span {
+  margin: 0 !important;
+  color: rgba(255,255,255,0.82) !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  font-weight: 650 !important;
+}
+
+.new-landing-page .landing-footer strong {
+  display: inline !important;
+  margin: 0 4px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  font-size: 1rem !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 0 18px rgba(216, 180, 254, 0.42) !important;
+}
+
+/* Smaller screens */
+@media (max-width: 760px) {
+  .new-landing-page .template-preview-card,
+  .new-landing-page .steps-grid article {
+    min-height: auto !important;
+    padding: 22px !important;
+  }
+
+  .new-landing-page .steps-grid article {
+    grid-template-columns: auto auto 1fr !important;
+  }
+
+  .new-landing-page .template-preview-card strong,
+  .new-landing-page .steps-grid article h3 {
+    font-size: 1.08rem !important;
+  }
+
+  .new-landing-page .template-preview-card small,
+  .new-landing-page .steps-grid article p {
+    font-size: 0.94rem !important;
+  }
+
+  .new-landing-page .landing-footer {
+    margin-top: 38px !important;
+    padding: 26px 16px !important;
+    font-size: 0.88rem !important;
+  }
+}
+
+/* ===== END v24 FINAL COMPACT CARDS + PROFESSIONAL FOOTER ===== */
+
+
+
+
+
+
+
+
+
+
+
+/* ===== v27 TRUE REVIEWS SECTION CENTER FIX ===== */
+/* Fixes complete Reviews block: heading + card + buttons. No JS/functionality touched. */
+
+/* Break Reviews out of any parent offset and center it against the actual viewport */
+.new-landing-page .reviews-section {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  margin-left: calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  overflow: visible !important;
+  text-align: center !important;
+}
+
+/* Real centered container */
+.new-landing-page .reviews-container {
+  width: min(1180px, calc(100vw - 48px)) !important;
+  max-width: 1180px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+}
+
+/* Remove previous relative shifting completely */
+.new-landing-page .reviews-header {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+
+  width: 100% !important;
+  max-width: 920px !important;
+  margin: 0 auto 34px !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+/* Center all header children */
+.new-landing-page .reviews-header .section-kicker,
+.new-landing-page .reviews-header h2,
+.new-landing-page .reviews-header p,
+.new-landing-page .reviews-summary-pill {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+}
+
+.new-landing-page .reviews-header h2 {
+  max-width: 860px !important;
+}
+
+.new-landing-page .reviews-header p {
+  max-width: 760px !important;
+}
+
+/* Important: grid was causing one review card to sit in the left column */
+.new-landing-page .reviews-grid {
+  width: 100% !important;
+  max-width: 1180px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  gap: 20px !important;
+}
+
+/* Review cards centered whether there is 1, 2, or 3 cards */
+.new-landing-page .review-card {
+  width: min(360px, 100%) !important;
+  flex: 0 1 360px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Empty review card also centered */
+.new-landing-page .review-empty-card {
+  width: min(680px, 100%) !important;
+  max-width: 680px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Buttons exactly centered under review cards */
+.new-landing-page .reviews-actions {
+  width: 100% !important;
+  max-width: 1180px !important;
+  margin: 30px auto 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 14px !important;
+  flex-wrap: wrap !important;
+  text-align: center !important;
+}
+
+@media (max-width: 760px) {
+  .new-landing-page .reviews-container {
+    width: calc(100vw - 24px) !important;
+  }
+
+  .new-landing-page .review-card,
+  .new-landing-page .review-empty-card {
+    width: 100% !important;
+    flex-basis: 100% !important;
+  }
+}
+
+/* ===== END v27 TRUE REVIEWS SECTION CENTER FIX ===== */
+
