@@ -9,3 +9,11 @@ backend/data/
 .DS_Store
 
 public/museforge-demo.mp4
+.env.local
+.env.production
+*.bak
+Thumbs.db
+clean-*.js
+fix-*.js
+hard-final-*.js
+final-*.js

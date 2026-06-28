@@ -1,6 +1,6 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body { 
+body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #ffffff;
   color: #1a1a1a;
@@ -8,7 +8,7 @@ body {
   line-height: 1.6;
 }
 
-.app { 
+.app {
   max-width: 800px;
   margin: 0 auto;
   padding: 40px 20px;
@@ -403,11 +403,11 @@ body {
     grid-template-columns: 1fr;
     gap: 40px;
   }
-  
+
   .hero-right {
     order: -1;
   }
-  
+
   .creators-container {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -417,21 +417,21 @@ body {
   .navbar-links {
     display: none;
   }
-  
+
   .hero-heading {
     font-size: 2.5rem;
   }
-  
+
   .hero-buttons {
     flex-direction: column;
   }
-  
+
   .btn-primary,
   .btn-secondary {
     width: 100%;
     justify-content: center;
   }
-  
+
   .creators-container {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -441,19 +441,19 @@ body {
   .navbar-container {
     padding: 12px 20px;
   }
-  
+
   .hero-section {
     padding: 40px 20px;
   }
-  
+
   .hero-heading {
     font-size: 2rem;
   }
-  
+
   .creators-section {
     padding: 40px 20px;
   }
-  
+
   .creators-container {
     grid-template-columns: 1fr;
   }
@@ -7273,114 +7273,6 @@ body:has(.form-with-image),
   letter-spacing: 0.22em;
 }
 
-/* ===== v21 Clean Royal Footer - No Circle Badges ===== */
-.new-landing-page .landing-footer {
-  position: relative !important;
-  width: 100% !important;
-  min-height: 92px !important;
-  margin-top: 46px !important;
-  padding: 32px 20px !important;
-
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  flex-wrap: wrap !important;
-
-  overflow: hidden !important;
-  isolation: isolate !important;
-
-  background:
-    radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.24), transparent 42%),
-    linear-gradient(135deg, #1b1032 0%, #33205e 52%, #1a0d2d 100%) !important;
-
-  border-top: 1px solid rgba(216, 180, 254, 0.22) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    0 -18px 42px rgba(76, 29, 149, 0.16) !important;
-
-  color: rgba(255, 255, 255, 0.74) !important;
-  text-align: center !important;
-  font-family: "Segoe UI", Arial, sans-serif !important;
-  font-size: 0.92rem !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.04em !important;
-}
-
-/* Remove old MuseForge pill/circle */
-.new-landing-page .landing-footer::before {
-  content: "" !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: 50% !important;
-  width: min(680px, 78%) !important;
-  height: 1px !important;
-  transform: translateX(-50%) !important;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(216, 180, 254, 0.58),
-    rgba(236, 72, 153, 0.28),
-    transparent
-  ) !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-
-/* Remove extra decorative pseudo layer */
-.new-landing-page .landing-footer::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: auto 0 0 0 !important;
-  height: 38px !important;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgba(255, 255, 255, 0.035)
-  ) !important;
-  z-index: -1 !important;
-}
-
-/* Make IBM and AI premium text, not bubbles */
-.new-landing-page .landing-footer strong {
-  display: inline !important;
-  margin: 0 3px !important;
-  padding: 0 !important;
-
-  background: none !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-
-  color: #ffffff !important;
-  font-weight: 900 !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase !important;
-}
-
-/* Small royal hover only, no movement */
-.new-landing-page .landing-footer:hover strong {
-  transform: none !important;
-  color: #f4e8ff !important;
-  text-shadow: 0 0 18px rgba(216, 180, 254, 0.35) !important;
-}
-
-@media (max-width: 640px) {
-  .new-landing-page .landing-footer {
-    min-height: 104px !important;
-    padding: 30px 18px !important;
-    font-size: 0.84rem !important;
-    line-height: 1.7 !important;
-    gap: 6px !important;
-  }
-
-  .new-landing-page .landing-footer strong {
-    letter-spacing: 0.06em !important;
-  }
-}
-
 /* ===== Safe sticky image polish only - no layout change ===== */
 .creator-image-panel {
   overflow: hidden !important;
@@ -8034,574 +7926,116 @@ body:has(.form-with-image),
   margin-top: 16px !important;
 }
 
+/* =========================================================
+   MuseForge final landing lock
+   Purpose: one safe, consolidated override block for the
+   approved landing-page polish. It replaces the previous
+   repeated footer/card/font patch blocks and does not touch
+   app logic, forms, FactLock, reviews data, or exports.
+   ========================================================= */
 
-/* ===== CORRECTED SAFE FIX: readable text, clean cards, premium footer ===== */
-
-/* 1) Main hero + section headings: only one step bigger */
-.new-landing-page .hero h1,
-.new-landing-page .hero-copy h1,
-.new-landing-page .hero-title {
-  font-size: clamp(4.1rem, 6.1vw, 6.6rem) !important;
-  line-height: 1.02 !important;
-  letter-spacing: -0.04em !important;
-}
-
-.new-landing-page .features-section h2,
-.new-landing-page .features-strip h2,
-.new-landing-page .hero-feature-strip h2,
-.new-landing-page .templates-copy h2,
-.new-landing-page .info-section h2,
-.new-landing-page .reviews-header h2 {
-  font-size: clamp(2.25rem, 3.35vw, 3.45rem) !important;
-  line-height: 1.1 !important;
-}
-
-/* 2) Small labels + paragraph text one size bigger */
-.new-landing-page .hero-badge,
-.new-landing-page .hero-kicker,
-.new-landing-page .hero-eyebrow,
-.new-landing-page .section-kicker,
-.new-landing-page .templates-copy .section-kicker,
-.new-landing-page .reviews-header .section-kicker,
-.new-landing-page .info-section .section-kicker {
-  font-size: 0.86rem !important;
-  letter-spacing: 0.17em !important;
-  font-weight: 950 !important;
-}
-
-.new-landing-page .hero p,
-.new-landing-page .hero-copy p,
-.new-landing-page .hero-subtitle,
-.new-landing-page .hero-lead,
+/* ---------- Final landing typography ---------- */
+.new-landing-page .nav-link,
+.new-landing-page .navbar-links a,
+.new-landing-page .navbar button,
+.new-landing-page .navbar-cta,
+.new-landing-page .navbar-logout,
+.new-landing-page .navbar-user,
+.new-landing-page .creator-card-title,
+.new-landing-page .creator-card-desc,
+.new-landing-page .info-grid article h3,
+.new-landing-page .info-grid article p,
+.new-landing-page .template-preview-card strong,
+.new-landing-page .template-preview-card small,
+.new-landing-page .steps-grid article h3,
+.new-landing-page .steps-grid article p,
+.new-landing-page .reviews-header p,
+.new-landing-page .reviews-section p,
 .new-landing-page .section-lead,
 .new-landing-page .templates-copy p,
-.new-landing-page .reviews-header p {
-  font-size: 1.06rem !important;
-  line-height: 1.66 !important;
-  font-weight: 560 !important;
+.new-landing-page .templates-copy button,
+.new-landing-page .templates-copy a,
+.new-landing-page .text-link-button {
+  font-family: "Times New Roman", Times, serif !important;
 }
 
-.new-landing-page .hero-meta,
-.new-landing-page .hero-meta span,
-.new-landing-page .hero-trust-row,
-.new-landing-page .hero-trust-row span {
-  font-size: 0.98rem !important;
-  line-height: 1.55 !important;
-  font-weight: 650 !important;
-}
-
-/* 3) Navbar + buttons text readable */
-.new-landing-page header a,
-.new-landing-page header button,
-.new-landing-page nav a,
-.new-landing-page nav button,
-.new-landing-page .nav-links a,
-.new-landing-page .nav-links button,
-.new-landing-page .user-greeting,
-.new-landing-page .nav-user,
-.new-landing-page .nav-user span {
-  font-size: 1rem !important;
-  font-weight: 850 !important;
-}
-
-.new-landing-page button,
-.new-landing-page .primary-cta,
-.new-landing-page .secondary-cta,
-.new-landing-page .start-btn,
-.new-landing-page .watch-btn,
-.new-landing-page .nav-cta,
-.new-landing-page .logout-btn {
-  font-size: 1.02rem !important;
-  font-weight: 900 !important;
-}
-
-/* 4) Creator cards: same layout, just text one size bigger */
-.new-landing-page .creator-card h3,
-.new-landing-page .creator-card strong,
-.new-landing-page .creator-card-title {
-  font-size: 1.16rem !important;
-  line-height: 1.28 !important;
-  font-weight: 950 !important;
-}
-
-.new-landing-page .creator-card p,
-.new-landing-page .creator-card small,
-.new-landing-page .creator-card-description {
-  font-size: 1rem !important;
-  line-height: 1.58 !important;
-  font-weight: 580 !important;
-}
-
-/* 5) Feature/template cards: emoji/icon ke samnay heading */
-.new-landing-page .feature-card,
-.new-landing-page .features-grid article,
-.new-landing-page .template-preview-card {
-  display: grid !important;
-  grid-template-columns: auto 1fr !important;
-  grid-template-rows: auto auto !important;
-  column-gap: 14px !important;
-  row-gap: 12px !important;
-  align-items: center !important;
-}
-
-.new-landing-page .feature-card > span:first-child,
-.new-landing-page .features-grid article > span:first-child,
-.new-landing-page .template-preview-card > span:first-child,
-.new-landing-page .feature-card img,
-.new-landing-page .features-grid article img,
-.new-landing-page .template-preview-card img {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  margin: 0 !important;
-  align-self: center !important;
-  justify-self: start !important;
-}
-
-.new-landing-page .feature-card h3,
-.new-landing-page .features-grid article h3,
-.new-landing-page .template-preview-card strong {
-  grid-column: 2 !important;
-  grid-row: 1 !important;
-  margin: 0 !important;
-  align-self: center !important;
-  font-size: 1.18rem !important;
-  line-height: 1.28 !important;
-  font-weight: 950 !important;
-}
-
-.new-landing-page .feature-card p,
-.new-landing-page .features-grid article p,
-.new-landing-page .template-preview-card small {
-  grid-column: 1 / -1 !important;
-  grid-row: 2 !important;
-  margin: 0 !important;
-  font-size: 1.02rem !important;
-  line-height: 1.58 !important;
-  font-weight: 580 !important;
-}
-
-/* 6) How-it-works cards: pehle jaisa layout, no overlap, only text bigger */
-.new-landing-page .steps-grid article {
-  display: grid !important;
-  grid-template-columns: auto 1fr !important;
-  grid-template-rows: auto auto auto !important;
-  column-gap: 14px !important;
-  row-gap: 8px !important;
-  align-items: center !important;
-}
-
-.new-landing-page .steps-grid article::before {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  margin: 0 !important;
-}
-
-.new-landing-page .steps-grid article b {
-  grid-column: 2 !important;
-  grid-row: 1 !important;
-  margin: 0 !important;
-  font-size: 1.72rem !important;
-  line-height: 1 !important;
-  font-weight: 950 !important;
-}
-
+.new-landing-page .creator-card-title,
+.new-landing-page .info-grid article h3,
+.new-landing-page .template-preview-card strong,
 .new-landing-page .steps-grid article h3 {
-  grid-column: 1 / -1 !important;
-  grid-row: 2 !important;
-  margin: 4px 0 0 !important;
-  font-size: 1.16rem !important;
-  line-height: 1.3 !important;
-  font-weight: 950 !important;
-}
-
-.new-landing-page .steps-grid article p {
-  grid-column: 1 / -1 !important;
-  grid-row: 3 !important;
-  margin: 0 !important;
-  font-size: 1rem !important;
-  line-height: 1.58 !important;
-  font-weight: 580 !important;
-}
-
-/* 7) Review stars properly bigger */
-.new-landing-page .reviews-section .stars,
-.new-landing-page .reviews-section .stars span,
-.new-landing-page .reviews-section .review-stars,
-.new-landing-page .reviews-section .review-stars span,
-.new-landing-page .reviews-section .rating-stars,
-.new-landing-page .reviews-section .rating-stars span,
-.new-landing-page .reviews-section [class*="star"],
-.new-landing-page .reviews-section [class*="Star"] {
-  font-size: 1.9rem !important;
-  line-height: 1 !important;
-  letter-spacing: 0.14em !important;
-  color: #a78bfa !important;
-}
-
-.new-landing-page .reviews-empty,
-.new-landing-page .reviews-empty p,
-.new-landing-page .review-empty,
-.new-landing-page .review-card p,
-.new-landing-page .review-tabs,
-.new-landing-page .review-tabs button {
-  font-size: 1.05rem !important;
-  line-height: 1.6 !important;
-  font-weight: 600 !important;
-}
-
-/* 8) Footer: clean premium, not ugly */
-.new-landing-page .landing-footer {
-  min-height: 82px !important;
-  padding: 24px 18px !important;
-  margin-top: 46px !important;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(216, 180, 254, 0.18), transparent 42%),
-    linear-gradient(135deg, #12051f 0%, #241047 52%, #351168 100%) !important;
-  border-top: 1px solid rgba(216, 180, 254, 0.25) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-  text-align: center !important;
-}
-
-.new-landing-page .landing-footer p,
-.new-landing-page .landing-footer span {
-  color: rgba(255, 255, 255, 0.9) !important;
-  font-size: 1rem !important;
-  line-height: 1.55 !important;
+  color: #1d203d !important;
   font-weight: 700 !important;
-  letter-spacing: 0.035em !important;
 }
 
-.new-landing-page .landing-footer strong {
-  color: #ffffff !important;
-  font-size: 1.04rem !important;
-  font-weight: 950 !important;
-  letter-spacing: 0.08em !important;
-  text-shadow: 0 0 16px rgba(216, 180, 254, 0.34) !important;
+.new-landing-page .creator-card-title {
+  font-size: 1.22rem !important;
+  line-height: 1.25 !important;
 }
 
-/* 9) Generated portfolio footer clean */
-.public-portfolio-page .footer,
-.portfolio-preview-shell .footer {
-  padding: 26px 16px !important;
-  text-align: center !important;
-  background: linear-gradient(135deg, #0d061b, #25104a) !important;
-  border-top: 1px solid rgba(216, 180, 254, 0.20) !important;
+.new-landing-page .creator-card-desc,
+.new-landing-page .info-grid article p,
+.new-landing-page .template-preview-card small,
+.new-landing-page .steps-grid article p,
+.new-landing-page .reviews-header p,
+.new-landing-page .reviews-section p,
+.new-landing-page .section-lead,
+.new-landing-page .templates-copy p {
+  color: #4f5568 !important;
+  font-weight: 400 !important;
+  line-height: 1.58 !important;
 }
 
-.public-portfolio-page .footer p,
-.portfolio-preview-shell .footer p {
-  margin: 0 !important;
-  color: rgba(255, 255, 255, 0.92) !important;
-  font-size: 1.02rem !important;
-  line-height: 1.55 !important;
-  font-weight: 760 !important;
-  letter-spacing: 0.03em !important;
+.new-landing-page .text-link-button {
+  color: #7c3aed !important;
+  font-weight: 700 !important;
 }
 
-.public-portfolio-page .footer .badge,
-.portfolio-preview-shell .footer .badge {
-  display: none !important;
-}
-
-/* Mobile controlled */
-@media (max-width: 760px) {
-  .new-landing-page .hero h1,
-  .new-landing-page .hero-copy h1,
-  .new-landing-page .hero-title {
-    font-size: clamp(3rem, 12vw, 4.1rem) !important;
-  }
-
-  .new-landing-page .feature-card h3,
-  .new-landing-page .features-grid article h3,
-  .new-landing-page .template-preview-card strong,
-  .new-landing-page .steps-grid article h3 {
-    font-size: 1.1rem !important;
-  }
-
-  .new-landing-page .feature-card p,
-  .new-landing-page .features-grid article p,
-  .new-landing-page .template-preview-card small,
-  .new-landing-page .steps-grid article p {
-    font-size: 0.96rem !important;
-  }
-
-  .new-landing-page .reviews-section [class*="star"],
-  .new-landing-page .reviews-section [class*="Star"] {
-    font-size: 1.55rem !important;
-  }
-}
-
-/* ===== END CORRECTED SAFE FIX: readable text, clean cards, premium footer ===== */
-/* ===== v23 FINAL TARGETED TEXT SIZE POLISH — APPEND ONLY ===== */
-/* Sirf highlighted landing text sizes + footer polish. No JS/functionality touched. */
-
-/* 1) Navbar greeting + buttons: thora readable */
-.new-landing-page .navbar-user,
-.new-landing-page .navbar-actions button,
-.new-landing-page .navbar-cta,
-.new-landing-page .navbar-logout {
-  font-size: 0.96rem !important;
-  font-weight: 850 !important;
-}
-
-/* 2) Hero highlighted heading + subtitle: one safe size bigger */
-.new-landing-page .hero-heading {
-  max-width: 620px !important;
-  font-size: clamp(2.35rem, 3vw, 3.35rem) !important;
-  line-height: 1.04 !important;
-  letter-spacing: -0.035em !important;
-}
-
-.new-landing-page .hero-subtitle {
-  font-size: 1.05rem !important;
-  line-height: 1.65 !important;
-  font-weight: 560 !important;
-}
-
-/* 3) Hero bottom trust row text */
-.new-landing-page .hero-trust,
-.new-landing-page .hero-trust .trust-item,
-.new-landing-page .trust-item {
-  font-size: 0.95rem !important;
-  line-height: 1.5 !important;
-  font-weight: 650 !important;
-}
-
-/* 4) Reviews empty/card stars: bigger but not cartoon huge */
-.new-landing-page .review-card-stars {
-  font-size: 1.85rem !important;
-  gap: 9px !important;
-  letter-spacing: 1px !important;
-  justify-content: center !important;
-}
-
-.new-landing-page .review-card-stars .star-muted {
-  color: #d2c4fb !important;
-}
-
-.new-landing-page .review-card-stars .star-filled {
-  color: #f59e0b !important;
-  text-shadow: 0 7px 20px rgba(245, 158, 11, 0.22) !important;
-}
-
-.new-landing-page .review-empty-message,
-.new-landing-page .review-card p {
-  font-size: 1.06rem !important;
-  line-height: 1.65 !important;
-}
-
-/* 5) Features cards: heading emoji/icon ke samnay */
+/* ---------- Feature cards: icon + heading same row ---------- */
 .new-landing-page .info-grid article {
   display: grid !important;
-  grid-template-columns: auto 1fr !important;
+  grid-template-columns: 52px 1fr !important;
   grid-template-rows: auto auto !important;
   column-gap: 16px !important;
   row-gap: 12px !important;
   align-items: center !important;
+  padding: 28px !important;
 }
 
 .new-landing-page .info-grid article > span {
   grid-column: 1 !important;
   grid-row: 1 !important;
+  width: 44px !important;
+  height: 44px !important;
   margin: 0 !important;
   align-self: center !important;
   justify-self: start !important;
-  width: 48px !important;
-  height: 48px !important;
-  font-size: 1.28rem !important;
 }
 
 .new-landing-page .info-grid article h3 {
   grid-column: 2 !important;
   grid-row: 1 !important;
   margin: 0 !important;
+  align-self: center !important;
   font-size: 1.24rem !important;
-  line-height: 1.28 !important;
-  font-weight: 950 !important;
+  line-height: 1.25 !important;
 }
 
 .new-landing-page .info-grid article p {
   grid-column: 1 / -1 !important;
   grid-row: 2 !important;
   margin: 0 !important;
-  font-size: 1.03rem !important;
-  line-height: 1.6 !important;
-  font-weight: 560 !important;
+  font-size: 1rem !important;
 }
 
-/* 6) Template cards: heading emoji ke samnay */
+/* ---------- Template cards ---------- */
 .new-landing-page .template-preview-card {
+  min-height: 155px !important;
   display: grid !important;
-  grid-template-columns: auto 1fr !important;
+  grid-template-columns: 54px 1fr !important;
   grid-template-rows: auto auto !important;
   column-gap: 16px !important;
   row-gap: 12px !important;
-  align-items: center !important;
-}
-
-.new-landing-page .template-preview-card .template-emoji,
-.new-landing-page .template-preview-card > span:first-child {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  margin: 0 !important;
-  align-self: center !important;
-  justify-self: start !important;
-  font-size: 2.25rem !important;
-  line-height: 1 !important;
-}
-
-.new-landing-page .template-preview-card strong {
-  grid-column: 2 !important;
-  grid-row: 1 !important;
-  margin: 0 !important;
-  font-size: 1.24rem !important;
-  line-height: 1.28 !important;
-  font-weight: 950 !important;
-}
-
-.new-landing-page .template-preview-card small {
-  grid-column: 1 / -1 !important;
-  grid-row: 2 !important;
-  margin: 0 !important;
-  font-size: 1.03rem !important;
-  line-height: 1.58 !important;
-  font-weight: 560 !important;
-}
-
-/* 7) How It Works cards: sirf size increase, heading emoji/number ke samnay NAHI */
-.new-landing-page .steps-grid article {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  gap: 10px !important;
-}
-
-.new-landing-page .steps-grid article b {
-  display: block !important;
-  margin: 0 0 2px !important;
-  font-size: 1.8rem !important;
-  line-height: 1 !important;
-  font-weight: 950 !important;
-}
-
-.new-landing-page .steps-grid article h3 {
-  display: block !important;
-  margin: 0 !important;
-  font-size: 1.24rem !important;
-  line-height: 1.3 !important;
-  font-weight: 950 !important;
-}
-
-.new-landing-page .steps-grid article p {
-  display: block !important;
-  margin: 0 !important;
-  font-size: 1.04rem !important;
-  line-height: 1.6 !important;
-  font-weight: 560 !important;
-}
-
-/* 8) Footer: clean premium, readable, no ugly bubble look */
-.new-landing-page .landing-footer {
-  min-height: 96px !important;
-  margin-top: 46px !important;
-  padding: 30px 20px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  flex-wrap: wrap !important;
-  text-align: center !important;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(216, 180, 254, 0.22), transparent 42%),
-    linear-gradient(135deg, #12051f 0%, #241047 52%, #341565 100%) !important;
-  border-top: 1px solid rgba(216, 180, 254, 0.24) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08) !important;
-  color: rgba(255,255,255,0.9) !important;
-  font-family: "Segoe UI", Arial, sans-serif !important;
-  font-size: 1.03rem !important;
-  line-height: 1.6 !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.035em !important;
-}
-
-.new-landing-page .landing-footer p,
-.new-landing-page .landing-footer span {
-  margin: 0 !important;
-  color: rgba(255,255,255,0.9) !important;
-  font-size: 1.03rem !important;
-  line-height: 1.6 !important;
-  font-weight: 700 !important;
-}
-
-.new-landing-page .landing-footer strong {
-  display: inline !important;
-  margin: 0 3px !important;
-  padding: 0 !important;
-  background: none !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  color: #ffffff !important;
-  font-size: 1.08rem !important;
-  font-weight: 950 !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase !important;
-  text-shadow: 0 0 16px rgba(216, 180, 254, 0.34) !important;
-}
-
-@media (max-width: 760px) {
-  .new-landing-page .hero-heading {
-    font-size: clamp(2rem, 10vw, 2.85rem) !important;
-  }
-
-  .new-landing-page .info-grid article h3,
-  .new-landing-page .template-preview-card strong,
-  .new-landing-page .steps-grid article h3 {
-    font-size: 1.14rem !important;
-  }
-
-  .new-landing-page .info-grid article p,
-  .new-landing-page .template-preview-card small,
-  .new-landing-page .steps-grid article p {
-    font-size: 0.98rem !important;
-  }
-
-  .new-landing-page .review-card-stars {
-    font-size: 1.55rem !important;
-  }
-
-  .new-landing-page .landing-footer {
-    min-height: 104px !important;
-    font-size: 0.92rem !important;
-  }
-}
-
-/* ===== END v23 FINAL TARGETED TEXT SIZE POLISH ===== */
-
-
-
-/* ===== v24 FINAL COMPACT CARDS + PROFESSIONAL FOOTER ===== */
-/* Fixes:
-   1) Template cards heading/text vertical gap reduced.
-   2) How It Works cards: emoji + 01/02/03 same row.
-   3) Footer upgraded to professional app-style footer.
-   JS/functionality untouched.
-*/
-
-/* TEMPLATE / 2ND-LAST CARDS: reduce empty vertical distance */
-.new-landing-page .template-preview-grid {
-  align-items: stretch !important;
-}
-
-.new-landing-page .template-preview-card {
-  min-height: 150px !important;
-  padding: 26px 28px !important;
-  display: grid !important;
-  grid-template-columns: auto 1fr !important;
-  grid-template-rows: auto auto !important;
-  column-gap: 16px !important;
-  row-gap: 14px !important;
-  align-items: center !important;
-  justify-content: start !important;
+  align-items: start !important;
 }
 
 .new-landing-page .template-preview-card > span:first-child,
@@ -8609,202 +8043,99 @@ body:has(.form-with-image),
   grid-column: 1 !important;
   grid-row: 1 !important;
   margin: 0 !important;
-  align-self: center !important;
-  justify-self: start !important;
   font-size: 2rem !important;
   line-height: 1 !important;
+  align-self: start !important;
+  justify-self: start !important;
 }
 
 .new-landing-page .template-preview-card strong {
   grid-column: 2 !important;
   grid-row: 1 !important;
-  margin: 0 !important;
-  align-self: center !important;
-  font-size: 1.18rem !important;
-  line-height: 1.25 !important;
-  font-weight: 950 !important;
-  color: #1d203d !important;
+  margin: 2px 0 0 !important;
+  font-size: 1.2rem !important;
+  line-height: 1.22 !important;
 }
 
 .new-landing-page .template-preview-card small {
   grid-column: 1 / -1 !important;
   grid-row: 2 !important;
   margin: 0 !important;
-  align-self: start !important;
-  font-size: 0.98rem !important;
-  line-height: 1.5 !important;
-  font-weight: 560 !important;
-  color: #63697a !important;
+  font-size: 1rem !important;
 }
 
-/* HOW IT WORKS / LAST CARDS: emoji + number same row, compact height */
-.new-landing-page .steps-grid {
-  align-items: stretch !important;
-}
-
+/* ---------- How-it-works cards: emoji + number same row ---------- */
 .new-landing-page .steps-grid article {
-  min-height: 150px !important;
+  min-height: 158px !important;
   padding: 26px 28px !important;
   display: grid !important;
-  grid-template-columns: auto auto 1fr !important;
-  grid-template-rows: auto auto !important;
+  grid-template-columns: 46px auto 1fr !important;
+  grid-template-rows: auto auto auto !important;
   column-gap: 14px !important;
-  row-gap: 12px !important;
-  align-items: center !important;
-  justify-content: start !important;
+  row-gap: 10px !important;
+  align-items: start !important;
 }
 
-.new-landing-page .steps-grid article > span:first-child,
-.new-landing-page .steps-grid article .step-icon {
+.new-landing-page .steps-grid article > img {
+  display: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+}
+
+.new-landing-page .steps-grid article::before {
+  content: "" !important;
   grid-column: 1 !important;
   grid-row: 1 !important;
+  width: 42px !important;
+  height: 42px !important;
   margin: 0 !important;
-  align-self: center !important;
-  justify-self: start !important;
-  width: 46px !important;
-  height: 46px !important;
-  display: inline-grid !important;
+  display: grid !important;
   place-items: center !important;
-  border-radius: 14px !important;
-  background: #f4efff !important;
-  font-size: 1.28rem !important;
+  border-radius: 12px !important;
+  background: #f5efff !important;
+  box-shadow: 0 10px 20px rgba(124, 58, 237, 0.08) !important;
+  font-size: 1.22rem !important;
   line-height: 1 !important;
+  color: initial !important;
 }
+
+.new-landing-page .steps-grid article:nth-child(1)::before { content: "🎯" !important; }
+.new-landing-page .steps-grid article:nth-child(2)::before { content: "✍️" !important; }
+.new-landing-page .steps-grid article:nth-child(3)::before { content: "✨" !important; }
 
 .new-landing-page .steps-grid article b {
   grid-column: 2 !important;
   grid-row: 1 !important;
+  margin: 5px 0 0 !important;
+  padding: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
-  margin: 0 !important;
-  align-self: center !important;
-  justify-self: start !important;
+  align-self: start !important;
   color: #a78bfa !important;
-  font-size: 1.42rem !important;
+  font-family: "Times New Roman", Times, serif !important;
+  font-size: 1.52rem !important;
   line-height: 1 !important;
-  font-weight: 950 !important;
+  font-weight: 700 !important;
 }
 
 .new-landing-page .steps-grid article h3 {
   grid-column: 1 / -1 !important;
   grid-row: 2 !important;
-  margin: 0 0 2px !important;
-  font-size: 1.18rem !important;
-  line-height: 1.25 !important;
-  font-weight: 950 !important;
-  color: #1d203d !important;
+  margin: 0 !important;
+  font-size: 1.22rem !important;
+  line-height: 1.24 !important;
 }
 
 .new-landing-page .steps-grid article p {
   grid-column: 1 / -1 !important;
   grid-row: 3 !important;
   margin: 0 !important;
-  font-size: 0.98rem !important;
-  line-height: 1.5 !important;
-  font-weight: 560 !important;
-  color: #63697a !important;
-}
-
-/* If card markup uses icon div instead of span, still keep first visual item inline */
-.new-landing-page .steps-grid article > :first-child {
-  align-self: center !important;
-}
-
-/* PROFESSIONAL FOOTER */
-.new-landing-page .landing-footer {
-  margin-top: 52px !important;
-  padding: 28px 22px !important;
-  min-height: 92px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 9px !important;
-  flex-wrap: wrap !important;
-  text-align: center !important;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.22), transparent 38%),
-    linear-gradient(135deg, #12091f 0%, #21103d 48%, #32165d 100%) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.10) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    0 -18px 45px rgba(76, 29, 149, 0.10) !important;
-  color: rgba(255,255,255,0.82) !important;
-  font-family: "Segoe UI", Arial, sans-serif !important;
-  font-size: 0.95rem !important;
-  line-height: 1.6 !important;
-  font-weight: 650 !important;
-  letter-spacing: 0.02em !important;
-}
-
-.new-landing-page .landing-footer p,
-.new-landing-page .landing-footer span {
-  margin: 0 !important;
-  color: rgba(255,255,255,0.82) !important;
-  font-size: 0.95rem !important;
-  line-height: 1.6 !important;
-  font-weight: 650 !important;
-}
-
-.new-landing-page .landing-footer strong {
-  display: inline !important;
-  margin: 0 4px !important;
-  padding: 0 !important;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  color: #ffffff !important;
   font-size: 1rem !important;
-  font-weight: 950 !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase !important;
-  text-shadow: 0 0 18px rgba(216, 180, 254, 0.42) !important;
 }
 
-/* Smaller screens */
-@media (max-width: 760px) {
-  .new-landing-page .template-preview-card,
-  .new-landing-page .steps-grid article {
-    min-height: auto !important;
-    padding: 22px !important;
-  }
-
-  .new-landing-page .steps-grid article {
-    grid-template-columns: auto auto 1fr !important;
-  }
-
-  .new-landing-page .template-preview-card strong,
-  .new-landing-page .steps-grid article h3 {
-    font-size: 1.08rem !important;
-  }
-
-  .new-landing-page .template-preview-card small,
-  .new-landing-page .steps-grid article p {
-    font-size: 0.94rem !important;
-  }
-
-  .new-landing-page .landing-footer {
-    margin-top: 38px !important;
-    padding: 26px 16px !important;
-    font-size: 0.88rem !important;
-  }
-}
-
-/* ===== END v24 FINAL COMPACT CARDS + PROFESSIONAL FOOTER ===== */
-
-
-
-
-
-
-
-
-
-
-
-/* ===== v27 TRUE REVIEWS SECTION CENTER FIX ===== */
-/* Fixes complete Reviews block: heading + card + buttons. No JS/functionality touched. */
-
-/* Break Reviews out of any parent offset and center it against the actual viewport */
+/* ---------- Reviews: keep header/card/button alignment centered ---------- */
 .new-landing-page .reviews-section {
   width: 100vw !important;
   max-width: 100vw !important;
@@ -8816,7 +8147,6 @@ body:has(.form-with-image),
   text-align: center !important;
 }
 
-/* Real centered container */
 .new-landing-page .reviews-container {
   width: min(1180px, calc(100vw - 48px)) !important;
   max-width: 1180px !important;
@@ -8827,49 +8157,23 @@ body:has(.form-with-image),
   text-align: center !important;
 }
 
-/* Remove previous relative shifting completely */
 .new-landing-page .reviews-header {
   position: static !important;
-  left: auto !important;
-  right: auto !important;
   transform: none !important;
-
   width: 100% !important;
   max-width: 920px !important;
   margin: 0 auto 34px !important;
-
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  justify-content: center !important;
   text-align: center !important;
 }
 
-/* Center all header children */
-.new-landing-page .reviews-header .section-kicker,
-.new-landing-page .reviews-header h2,
-.new-landing-page .reviews-header p,
-.new-landing-page .reviews-summary-pill {
-  margin-left: auto !important;
-  margin-right: auto !important;
-  text-align: center !important;
-}
-
-.new-landing-page .reviews-header h2 {
-  max-width: 860px !important;
-}
-
-.new-landing-page .reviews-header p {
-  max-width: 760px !important;
-}
-
-/* Important: grid was causing one review card to sit in the left column */
 .new-landing-page .reviews-grid {
   width: 100% !important;
   max-width: 1180px !important;
   margin-left: auto !important;
   margin-right: auto !important;
-
   display: flex !important;
   flex-wrap: wrap !important;
   justify-content: center !important;
@@ -8877,35 +8181,87 @@ body:has(.form-with-image),
   gap: 20px !important;
 }
 
-/* Review cards centered whether there is 1, 2, or 3 cards */
 .new-landing-page .review-card {
   width: min(360px, 100%) !important;
   flex: 0 1 360px !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
 }
 
-/* Empty review card also centered */
-.new-landing-page .review-empty-card {
-  width: min(680px, 100%) !important;
-  max-width: 680px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* Buttons exactly centered under review cards */
-.new-landing-page .reviews-actions {
-  width: 100% !important;
-  max-width: 1180px !important;
-  margin: 30px auto 0 !important;
+/* ---------- Landing footer: one pill + one darker footer band ---------- */
+.new-landing-page .landing-footer {
+  position: relative !important;
+  z-index: 2 !important;
+  isolation: isolate !important;
+  overflow: visible !important;
+  width: fit-content !important;
+  max-width: calc(100% - 48px) !important;
+  min-height: auto !important;
+  margin: 58px auto 36px !important;
+  padding: 12px 30px !important;
   display: flex !important;
-  justify-content: center !important;
   align-items: center !important;
-  gap: 14px !important;
-  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, #a855f7, #ec4899) !important;
+  box-shadow: 0 14px 30px rgba(168, 85, 247, 0.24) !important;
+  color: #ffffff !important;
+  font-family: "Segoe UI", Arial, sans-serif !important;
+  font-size: 1rem !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
   text-align: center !important;
+  white-space: nowrap !important;
 }
 
+.new-landing-page .landing-footer::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: -34px !important;
+  transform: translateX(-50%) !important;
+  width: 100vw !important;
+  height: 126px !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(93, 25, 112, 0.62) 0%,
+      rgba(124, 58, 237, 0.52) 45%,
+      rgba(192, 38, 145, 0.44) 100%
+    ) !important;
+  border-top: 2px solid rgba(91, 33, 182, 0.62) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 -12px 34px rgba(91, 33, 182, 0.22) !important;
+}
+
+.new-landing-page .landing-footer::after {
+  content: none !important;
+  display: none !important;
+}
+
+.new-landing-page .landing-footer strong,
+.new-landing-page .landing-footer span,
+.new-landing-page .landing-footer b {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  font: inherit !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
+  text-shadow: none !important;
+}
+
+/* ---------- Mobile landing corrections ---------- */
 @media (max-width: 760px) {
   .new-landing-page .reviews-container {
     width: calc(100vw - 24px) !important;
@@ -8916,7 +8272,88 @@ body:has(.form-with-image),
     width: 100% !important;
     flex-basis: 100% !important;
   }
+
+  .new-landing-page .template-preview-card,
+  .new-landing-page .steps-grid article,
+  .new-landing-page .info-grid article {
+    padding: 22px !important;
+  }
+
+  .new-landing-page .creator-card-title,
+  .new-landing-page .info-grid article h3,
+  .new-landing-page .template-preview-card strong,
+  .new-landing-page .steps-grid article h3 {
+    font-size: 1.08rem !important;
+  }
+
+  .new-landing-page .info-grid article p,
+  .new-landing-page .template-preview-card small,
+  .new-landing-page .steps-grid article p {
+    font-size: 0.94rem !important;
+  }
+
+  .new-landing-page .landing-footer {
+    max-width: calc(100% - 24px) !important;
+    padding: 11px 20px !important;
+    font-size: 0.9rem !important;
+    white-space: normal !important;
+  }
 }
 
-/* ===== END v27 TRUE REVIEWS SECTION CENTER FIX ===== */
+
+/* ===== FINAL FOOTER POSITION + PLAIN PURPLE BAND TWEAK ===== */
+/* Only footer position, band color, and band height changed. Existing pill/text preserved. */
+
+.new-landing-page .landing-footer {
+  margin: 38px auto 24px !important;
+  transform: translateY(-8px) !important;
+}
+
+/* One clean plain-purple footer band behind the pill */
+.new-landing-page .landing-footer::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: -24px !important;
+  transform: translateX(-50%) !important;
+  width: 100vw !important;
+  height: 88px !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+
+  background: rgba(155, 38, 145, 0.48) !important;
+  border-top: 1.5px solid rgba(155, 38, 145, 0.72) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+/* Prevent any second footer band/line */
+.new-landing-page .landing-footer::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Do not change inner pill text styling */
+.new-landing-page .landing-footer strong,
+.new-landing-page .landing-footer span,
+.new-landing-page .landing-footer b {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+/* ===== END FINAL FOOTER POSITION + PLAIN PURPLE BAND TWEAK ===== */
+
+
+/* ===== FOOTER BAND TEXT-PURPLE COLOR ONLY ===== */
+/* Only changes footer box/band color. Footer pill/text untouched. */
+
+.new-landing-page .landing-footer::before {
+  background: rgba(124, 58, 237, 0.46) !important;
+  border-top: 1.5px solid rgba(124, 58, 237, 0.75) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 -8px 22px rgba(124, 58, 237, 0.16) !important;
+}
+
+/* ===== END FOOTER BAND TEXT-PURPLE COLOR ONLY ===== */
 

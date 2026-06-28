@@ -213,7 +213,6 @@ const LANGUAGE_OPTIONS = [
 ];
 
 const isSupportedOutputLanguage = (language = '') => LANGUAGE_OPTIONS.includes(String(language || '').trim());
-const normalizeOutputLanguage = (language = 'English') => isSupportedOutputLanguage(language) ? String(language).trim() : 'English';
 
 
 const AI_TONE_OPTIONS = ['Professional', 'Creative', 'Minimal', 'Bold'];
@@ -569,32 +568,6 @@ const hasUnexpectedScriptForLanguage = (value = '', language = 'English') => {
   return false;
 };
 
-const _pickLocalizedCandidate = (candidate = '', fallback = '', language = 'English') => {
-  const cleanCandidate = String(candidate || '').trim();
-  const cleanFallback = String(fallback || '').trim();
-  const fallbackLocalized = localizeClientText(cleanFallback, language) || cleanFallback;
-  if (!cleanCandidate) return fallbackLocalized;
-  if (hasUnexpectedScriptForLanguage(cleanCandidate, language)) return fallbackLocalized;
-  if (textKey(cleanCandidate) === textKey(cleanFallback)) return fallbackLocalized;
-  return cleanCandidate;
-};
-
-const isWeakDescription = (desc = '', title = '') => {
-  const cleanDesc = String(desc || '').trim();
-  const cleanTitle = String(title || '').trim();
-  if (!cleanDesc) return true;
-  if (cleanDesc.length < 18) return true;
-  if (cleanTitle && textKey(cleanDesc) === textKey(cleanTitle)) return true;
-  if (cleanTitle && textKey(cleanDesc).replace(/\b(project|song|portfolio|performance)\b/g, '').trim() === textKey(cleanTitle)) return true;
-  return false;
-};
-
-const _chooseUsefulDescription = (candidate = '', fallback = '', title = '') => {
-  const cleanCandidate = String(candidate || '').trim();
-  const cleanFallback = String(fallback || '').trim();
-  if (isWeakDescription(cleanCandidate, title) && cleanFallback) return cleanFallback;
-  return cleanCandidate || cleanFallback;
-};
 
 const pickLocalizedName = (candidate = '', fallback = '', language = 'English') => {
   const cleanFallback = fixPersonNameForDisplay(fallback || candidate || '');
@@ -665,15 +638,6 @@ const safeClientLocalized = (candidate = '', fallback = '', language = 'English'
   return frontendGenericLocalized(language, kind) || localizedFallback || cleanFallback || '';
 };
 
-
-
-
-const escapeClientHtml = (value = '') => String(value || '')
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;')
-  .replace(/'/g, '&#039;');
 
 const textKey = (value = '') => String(value || '')
   .toLowerCase()
@@ -954,7 +918,7 @@ const localizeLocationText = (value = '', language = 'English') => {
   const text = String(value || '').trim();
   if (!text) return text;
   const family = languageFamilyName(language);
-  const normalized = text.toLowerCase().replace(/\s+/g, ' ').replace(/،/g, ',');
+
   const countryMap = {
     pakistan: {
       spanish: 'Pakistán', french: 'Pakistan', german: 'Pakistan', italian: 'Pakistan', portuguese: 'Paquistão', dutch: 'Pakistan', turkish: 'Pakistan',
@@ -1141,12 +1105,6 @@ const languageDirection = (language = 'English') => (['Arabic', 'Urdu', 'Persian
 
 const isFactLockResolved = (review = {}) => ['accepted', 'edited', 'original kept', 'kept original', 'original'].includes(String(review.status || '').toLowerCase());
 
-const translateMarkdownHeading = (heading = '', labels = PORTFOLIO_LABELS.English) => {
-  const cleaned = String(heading).replace(/^#+\s*/, '').trim().toLowerCase();
-  if (cleaned === 'artist bio' || cleaned === 'bio' || cleaned === 'about') return labels.artistBio;
-  if (cleaned === 'artist statement' || cleaned === 'statement') return labels.artistStatement;
-  return String(heading).replace(/^#+\s*/, '').trim();
-};
 
 const withOriginalProjectMedia = (localizedProjects = [], sourceProjects = []) => {
   const source = Array.isArray(sourceProjects) ? sourceProjects : [];
@@ -1926,7 +1884,7 @@ function App() {
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [suggestionError, setSuggestionError] = useState('');
   const [portfolioVersions, setPortfolioVersions] = useState([]);
-  const [_linkedinCopied, setLinkedinCopied] = useState(false);
+
   const [factLockReviews, setFactLockReviews] = useState([]);
   const [regeneratingFactLockId, setRegeneratingFactLockId] = useState('');
   const [localizedOutput, setLocalizedOutput] = useState(null);
@@ -2197,88 +2155,6 @@ function App() {
   };
 
 
-  const _generateProfileBioAndStatement = async () => {
-  const creatorLabel =
-    selectedCreatorType && CREATOR_TYPES[selectedCreatorType]
-      ? CREATOR_TYPES[selectedCreatorType].label
-      : "";
-
-  const outputLanguage =
-    portfolioLanguage || "English";
-
-  const payload = {
-    name: name || "",
-    creatorType: selectedCreatorType || "",
-    creatorLabel,
-    category: "" || "",
-    description:
-      description || "",
-    projects: projects || [],
-    skills: skills || [],
-    contact: contact || {},
-    outputLanguage,
-    tone: aiTone || "Professional"
-  };
-
-  const res = await fetch("http://localhost:5000/api/profile-ai-text", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!res.ok) {
-    throw new Error("Bio/Statement AI generation failed");
-  }
-
-  const data = await res.json();
-
-  const bioHeading =
-    data.bioHeading || getBioHeading(selectedCreatorType, creatorLabel);
-
-  const statementHeading =
-    data.statementHeading || getStatementHeading(selectedCreatorType, creatorLabel);
-
-  const enhancedBio = data.bio || "";
-  const enhancedStatement = data.statement || "";
-
-  // bio/statement used in factLockReviews below
-
-  setFactLockReviews((prev) => {
-    const cleaned = (prev || []).filter(
-      (item) => item.key !== "bio" && item.key !== "statement"
-    );
-
-    return [
-      ...cleaned,
-      {
-        key: "bio",
-        field: "bio",
-        section: bioHeading,
-        title: bioHeading,
-        original: payload.description || "",
-        enhanced: enhancedBio,
-        originalText: payload.description || "",
-        enhancedText: enhancedBio,
-        status: "pending"
-      },
-      {
-        key: "statement",
-        field: "statement",
-        section: statementHeading,
-        title: statementHeading,
-        original: "" || "",
-        enhanced: enhancedStatement,
-        originalText: "" || "",
-        enhancedText: enhancedStatement,
-        status: "pending"
-      }
-    ];
-  });
-};
-
-
   const handleAuthentication = async ({ mode, name: submittedName, email, password }) => {
     setAuthLoading(true);
     setAuthError('');
@@ -2313,7 +2189,6 @@ if (data.pendingVerification) {
 }
 
 completeAuthentication(data, mode === 'signup' ? 'Account created successfully.' : 'Logged in successfully.');
-      completeAuthentication(data, mode === 'signup' ? 'Account created successfully.' : 'Logged in successfully.');
     } catch (error) {
       setAuthError(readableAuthError(error));
     } finally {
@@ -2465,6 +2340,8 @@ completeAuthentication(data, mode === 'signup' ? 'Account created successfully.'
       });
 
     return () => { active = false; };
+    // completeAuthentication is intentionally omitted here because adding it would rerun this one-time verification effect on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authView, verificationToken]);
 
   const logout = () => {
@@ -2538,15 +2415,15 @@ completeAuthentication(data, mode === 'signup' ? 'Account created successfully.'
       const formData = new FormData();
       formData.append('cv', file);
       const res = await fetchFromBackend('/parse-cv', { method: 'POST', body: formData });
-      
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
         throw new Error(errorData.error || `HTTP ${res.status}: ${res.statusText}`);
       }
-      
+
       const data = await res.json();
       console.log('CV parsed:', data);
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
@@ -2764,27 +2641,6 @@ completeAuthentication(data, mode === 'signup' ? 'Account created successfully.'
     );
   };
 
-  const buildLinkedInExportText = () => {
-    const projectLines = projects
-      .filter(project => String(project.title || '').trim())
-      .slice(0, 5)
-      .map(project => `• ${project.title}${project.desc ? ` — ${project.desc}` : ''}`)
-      .join('\n');
-    return [
-      `${name || 'My Portfolio'} — ${medium || 'Creator Portfolio'}`,
-      description,
-      projectLines ? `\nSelected work:\n${projectLines}` : '',
-      shareUrl ? `\nPortfolio link: ${shareUrl}` : '',
-      '\nBuilt with MuseForge.'
-    ].filter(Boolean).join('\n');
-  };
-
-  const _copyLinkedInExport = async () => {
-    const text = buildLinkedInExportText();
-    await navigator.clipboard.writeText(text);
-    setLinkedinCopied(true);
-    setTimeout(() => setLinkedinCopied(false), 2000);
-  };
 
   const handleProjectMedia = (projectId, e, forcedType = null) => {
     const file = e.target.files[0];
@@ -2905,7 +2761,7 @@ completeAuthentication(data, mode === 'signup' ? 'Account created successfully.'
         })),
       }));
       const shouldEnhanceProjects = !(selectedCreatorType === 'developer' && cvFilled);
-      
+
       const res = await fetchFromBackend('/generate', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2924,22 +2780,22 @@ completeAuthentication(data, mode === 'signup' ? 'Account created successfully.'
           aiTone,
         }),
       });
-      
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
         throw new Error(errorData.error || `HTTP ${res.status}: ${res.statusText}`);
       }
-      
+
       const data = await res.json();
       setGenerationNotice(data.warning || '');
       const fallbackLocalized = normalizeLocalizedOutput({}, { language: portfolioLanguage, name, medium, projects, customSections, skills });
       const normalizedLocalized = normalizeLocalizedOutput(data.localizedOutput || {}, fallbackLocalized);
       setLocalizedOutput(normalizedLocalized);
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
-      
+
       if (data.portfolio) {
         const projectReviews = Array.isArray(data.enhancedProjects)
           ? data.enhancedProjects
@@ -3416,17 +3272,25 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     const htmlDir = languageDirection(portfolioLanguage);
     const exportTheme = buildExportTheme(customOptions);
 
+    const exportAttr = (value = '') => String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
     const projectsHTML = exportProjects.filter(p => p.title.trim()).map((p, i) => {
       const titleEl = p.link
         ? `<a href="${p.link}" target="_blank" rel="noopener noreferrer" class="project-link"><strong class="project-title">${p.title}</strong></a>`
         : `<strong class="project-title">${p.title}</strong>`;
       let mediaEl = '';
       if (p.media) {
+        const mediaSrc = exportAttr(p.media.src);
+        const mediaTitle = exportAttr(p.title || `Project ${i + 1}`);
         mediaEl = p.media.type === 'image'
-          ? `<div class="project-media"><img src="${p.media.src}" alt="${p.title}" class="project-media-img"/></div>`
+          ? `<div class="project-media"><img src="${mediaSrc}" alt="${mediaTitle}" class="project-media-img media-lightbox-trigger" data-lightbox-type="image" data-lightbox-src="${mediaSrc}" data-lightbox-title="${mediaTitle}" role="button" tabindex="0"/></div>`
           : p.media.type === 'video'
-            ? `<div class="project-media"><video controls class="project-media-video"><source src="${p.media.src}"/></video></div>`
-            : `<div class="project-media"><audio controls class="project-media-audio"><source src="${p.media.src}"/></audio></div>`;
+            ? `<div class="project-media"><video controls class="project-media-video media-lightbox-trigger" data-lightbox-type="video" data-lightbox-src="${mediaSrc}" data-lightbox-title="${mediaTitle}" tabindex="0"><source src="${mediaSrc}"/></video></div>`
+            : `<div class="project-media"><audio controls class="project-media-audio"><source src="${mediaSrc}"/></audio></div>`;
       }
       return `<div class="project-card">
         <div class="project-number">${i + 1}</div>
@@ -3473,13 +3337,18 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
         <h2 class="section-title">${s.name}</h2>
         <div class="custom-items">
           ${s.items.map(it => {
-            const mediaEl = it.media
-              ? it.media.type === 'image'
-                ? `<div class="project-media"><img src="${it.media.src}" alt="${it.heading || s.name}" class="project-media-img"/></div>`
-                : it.media.type === 'video'
-                  ? `<div class="project-media"><video controls class="project-media-video"><source src="${it.media.src}"/></video></div>`
-                  : `<div class="project-media"><audio controls class="project-media-audio"><source src="${it.media.src}"/></audio></div>`
-              : '';
+            const mediaEl = (() => {
+              if (!it.media) return '';
+              const mediaSrc = exportAttr(it.media.src);
+              const mediaTitle = exportAttr(it.heading || s.name || 'Portfolio media');
+              if (it.media.type === 'image') {
+                return `<div class="project-media"><img src="${mediaSrc}" alt="${mediaTitle}" class="project-media-img media-lightbox-trigger" data-lightbox-type="image" data-lightbox-src="${mediaSrc}" data-lightbox-title="${mediaTitle}" role="button" tabindex="0"/></div>`;
+              }
+              if (it.media.type === 'video') {
+                return `<div class="project-media"><video controls class="project-media-video media-lightbox-trigger" data-lightbox-type="video" data-lightbox-src="${mediaSrc}" data-lightbox-title="${mediaTitle}" tabindex="0"><source src="${mediaSrc}"/></video></div>`;
+              }
+              return `<div class="project-media"><audio controls class="project-media-audio"><source src="${mediaSrc}"/></audio></div>`;
+            })();
             return `
             <div class="custom-item">
               ${it.heading ? `<div class="custom-item-heading">${it.heading}</div>` : ''}
@@ -3598,6 +3467,43 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     .project-media-img { max-width: 100%; max-height: 300px; border-radius: 6px; object-fit: cover; border: 1px solid var(--mf-border); }
     .project-media-video { max-width: 100%; max-height: 300px; border-radius: 6px; border: 1px solid var(--mf-border); }
     .project-media-audio { width: min(100%, 460px); }
+    .project-media-img,
+    .project-media-video { cursor: zoom-in; }
+    .media-lightbox {
+      position: fixed; inset: 0; z-index: 9999;
+      display: grid; place-items: center; padding: 24px;
+      background: rgba(7, 3, 18, 0.78);
+      backdrop-filter: blur(10px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.18s ease;
+    }
+    .media-lightbox.open { opacity: 1; pointer-events: auto; }
+    .media-lightbox-panel {
+      position: relative; width: min(980px, 96vw);
+      max-height: 90vh; padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 22px;
+      background: rgba(15, 10, 28, 0.92);
+      box-shadow: 0 34px 90px rgba(0, 0, 0, 0.42);
+    }
+    .media-lightbox-close {
+      position: absolute; right: 14px; top: 14px; z-index: 2;
+      width: 40px; height: 40px; border: 0; border-radius: 999px;
+      color: #fff; background: linear-gradient(135deg, #a855f7, #ec4899);
+      font-size: 1.35rem; line-height: 1; cursor: pointer;
+      box-shadow: 0 12px 24px rgba(168, 85, 247, 0.28);
+    }
+    .media-lightbox-title {
+      padding: 4px 54px 14px 2px;
+      color: #fff; font: 700 1rem/1.3 'Inter', sans-serif;
+    }
+    .media-lightbox-body { display: grid; place-items: center; }
+    .media-lightbox-body img,
+    .media-lightbox-body video {
+      display: block; max-width: 100%; max-height: 76vh;
+      border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #05030a; object-fit: contain;
+    }
     .skills-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
     .skill-category-title { color: var(--mf-subheading); font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; font-family: 'Inter', sans-serif; }
     .skill-items { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -3609,8 +3515,30 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     .contact-value { color: var(--mf-body); font-size: 1rem; }
     .contact-link { color: var(--mf-body); text-decoration: none; font-weight: 500; }
     .contact-link:hover { color: #a855f7; }
-    .footer { text-align: center; padding: 36px; border-top: 1px solid #2a1a4e; background: #0f0f1a; font-family: 'Inter', sans-serif; }
-    .footer p { color: var(--mf-muted); font-size: 0.85rem; margin-bottom: 10px; }
+    .footer {
+      margin: 56px auto 0;
+      padding: 28px 16px 42px;
+      text-align: center;
+      border-top: 1px solid rgba(168, 85, 247, 0.16);
+      background: transparent;
+      font-family: "Times New Roman", Times, serif;
+    }
+    .footer p {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 12px 30px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      color: #ffffff;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 1.05rem;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      box-shadow: 0 14px 30px rgba(168, 85, 247, 0.26);
+    }
     .badge { display: inline-block; background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 20px; padding: 8px 20px; font-size: 0.8rem; color: white; font-weight: 500; }
   </style>
 </head>
@@ -3633,7 +3561,14 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     ${contactHTML}
   </div>
   <div class="footer">
-    <p>Created with MuseForge</p>
+    <p>Created by MuseForge</p>
+  </div>
+  <div class="media-lightbox" id="mediaLightbox" aria-hidden="true">
+    <div class="media-lightbox-panel" role="dialog" aria-modal="true" aria-label="Media preview">
+      <button class="media-lightbox-close" type="button" aria-label="Close media preview">×</button>
+      <div class="media-lightbox-title" id="mediaLightboxTitle"></div>
+      <div class="media-lightbox-body" id="mediaLightboxBody"></div>
+    </div>
   </div>
   <script>
     document.querySelectorAll('.hero-nav-link').forEach(l => {
@@ -3642,6 +3577,63 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
         const target = document.querySelector(l.getAttribute('href'));
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
+    });
+
+    const mediaLightbox = document.getElementById('mediaLightbox');
+    const mediaLightboxBody = document.getElementById('mediaLightboxBody');
+    const mediaLightboxTitle = document.getElementById('mediaLightboxTitle');
+    const mediaLightboxClose = mediaLightbox?.querySelector('.media-lightbox-close');
+
+    const closeMediaLightbox = () => {
+      if (!mediaLightbox) return;
+      mediaLightbox.classList.remove('open');
+      mediaLightbox.setAttribute('aria-hidden', 'true');
+      if (mediaLightboxBody) mediaLightboxBody.innerHTML = '';
+    };
+
+    const openMediaLightbox = (trigger) => {
+      if (!mediaLightbox || !mediaLightboxBody) return;
+      const type = trigger.getAttribute('data-lightbox-type');
+      const src = trigger.getAttribute('data-lightbox-src');
+      const title = trigger.getAttribute('data-lightbox-title') || 'Portfolio media';
+      if (!src || !type) return;
+
+      mediaLightboxTitle.textContent = title;
+      mediaLightboxBody.innerHTML = '';
+
+      const media = document.createElement(type === 'video' ? 'video' : 'img');
+      media.src = src;
+      if (type === 'video') {
+        media.controls = true;
+        media.autoplay = true;
+      } else {
+        media.alt = title;
+      }
+      mediaLightboxBody.appendChild(media);
+      mediaLightbox.classList.add('open');
+      mediaLightbox.setAttribute('aria-hidden', 'false');
+      mediaLightboxClose?.focus();
+    };
+
+    document.querySelectorAll('.media-lightbox-trigger').forEach(trigger => {
+      trigger.addEventListener('click', event => {
+        event.preventDefault();
+        openMediaLightbox(trigger);
+      });
+      trigger.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openMediaLightbox(trigger);
+        }
+      });
+    });
+
+    mediaLightboxClose?.addEventListener('click', closeMediaLightbox);
+    mediaLightbox?.addEventListener('click', event => {
+      if (event.target === mediaLightbox) closeMediaLightbox();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeMediaLightbox();
     });
   </script>
 </body>
