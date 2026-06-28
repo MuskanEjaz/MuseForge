@@ -528,6 +528,44 @@ function buildFrontendLink(params = {}) {
   return url.toString();
 }
 
+function createVerificationCode() {
+  return String(crypto.randomInt(100000, 1000000));
+}
+
+async function sendVerificationCodeEmail(user, rawCode) {
+  if (!mailTransporter) {
+    return { sent: false, reason: 'Email service is not configured.' };
+  }
+
+  const from = String(process.env.MAIL_FROM || process.env.SMTP_USER || 'MuseForge <no-reply@museforge.local>').trim();
+  const safeName = escapeHtml(user.name || 'Creator');
+  const safeCode = escapeHtml(rawCode);
+  const subject = 'Your MuseForge verification code';
+  const text = `Hi ${user.name || 'Creator'},\n\nYour MuseForge verification code is: ${rawCode}\n\nEnter this code in the MuseForge app to activate your account. This code expires in 10 minutes.\n\nIf you did not create this account, you can ignore this email.`;
+  const html = `<!doctype html>
+  <html lang="en">
+    <body style="margin:0;background:#f7f1ff;font-family:Arial,sans-serif;color:#2d2340">
+      <div style="max-width:620px;margin:0 auto;padding:36px 18px">
+        <div style="background:#ffffff;border:1px solid #eadcff;border-radius:24px;padding:32px;box-shadow:0 18px 45px rgba(124,58,237,0.12)">
+          <div style="font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:#7c3aed;font-weight:800;margin-bottom:12px">MuseForge verification</div>
+          <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:30px;color:#20143d">Verify your email</h1>
+          <p style="font-size:16px;line-height:1.6;margin:0 0 18px">Hi ${safeName}, enter this code in MuseForge to activate your account.</p>
+          <div style="margin:24px 0;padding:20px;border-radius:18px;background:#f3e8ff;text-align:center;border:1px solid #ddd0ff">
+            <div style="font-size:34px;letter-spacing:0.22em;font-weight:900;color:#6d28d9">${safeCode}</div>
+          </div>
+          <p style="font-size:14px;line-height:1.6;color:#6b627a;margin:0">This code expires in 10 minutes. If you did not create this account, you can ignore this email.</p>
+        </div>
+      </div>
+    </body>
+  </html>`;
+
+  try {
+    const info = await mailTransporter.sendMail({ from, to: user.email, subject, text, html });
+    return { sent: true, messageId: info?.messageId || null };
+  } catch (error) {
+    return { sent: false, reason: error.message };
+  }
+}
 async function sendVerificationEmail(user, rawToken) {
   if (!mailTransporter) return { sent: false, reason: 'Email service is not configured.' };
 
@@ -2197,7 +2235,7 @@ app.post('/auth/signup', async (req, res) => {
   }
 
   const { salt, hash } = hashPassword(password);
-  const rawVerificationToken = createActionToken();
+  const rawVerificationCode = createVerificationCode();
   const now = new Date();
 
   const user = {
@@ -2208,8 +2246,8 @@ app.post('/auth/signup', async (req, res) => {
     passwordSalt: salt,
     passwordHash: hash,
     emailVerified: false,
-    verificationTokenHash: hashActionToken(rawVerificationToken),
-    verificationTokenExpiresAt: new Date(now.getTime() + (24 * 60 * 60 * 1000)).toISOString(),
+    verificationCodeHash: hashActionToken(rawVerificationCode),
+    verificationCodeExpiresAt: new Date(now.getTime() + (10 * 60 * 1000)).toISOString(),
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   };
@@ -2217,12 +2255,12 @@ app.post('/auth/signup', async (req, res) => {
   users.push(user);
   writeUsers(users);
 
-  const verificationEmail = await sendVerificationEmail(user, rawVerificationToken);
+  const verificationEmail = await sendVerificationCodeEmail(user, rawVerificationCode);
 
   if (!verificationEmail.sent) {
-    console.error('Verification email failed:', verificationEmail.reason || 'Unknown email error');
+    console.error('Verification code email failed:', verificationEmail.reason || 'Unknown email error');
   } else {
-    console.log('Verification email sent to:', user.email);
+    console.log('Verification code email sent to:', user.email);
   }
 
   return res.status(201).json({
@@ -2230,9 +2268,81 @@ app.post('/auth/signup', async (req, res) => {
     email: user.email,
     verificationEmailSent: verificationEmail.sent,
     message: verificationEmail.sent
-      ? `Account created. We sent a verification link to ${user.email}.`
-      : 'Account created, but verification email could not be sent. Please use Resend verification.',
-    ...(process.env.NODE_ENV === 'test' ? { testVerificationToken: rawVerificationToken } : {}),
+      ? `Account created. We sent a 6-digit verification code to ${user.email}.`
+      : 'Account created, but verification code email could not be sent. Please use Resend verification.',
+  });
+});
+
+app.post('/auth/verify-code', async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  const rawCode = String(req.body?.code || '').replace(/\D/g, '').slice(0, 6);
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'Please enter a valid email address.' });
+  }
+
+  if (!/^\d{6}$/.test(rawCode)) {
+    return res.status(400).json({ error: 'Please enter the 6-digit verification code.' });
+  }
+
+  const users = readUsers();
+  const userIndex = users.findIndex(user => normalizeEmail(user.email) === email);
+  const user = userIndex >= 0 ? users[userIndex] : null;
+
+  if (!user) {
+    return res.status(400).json({ error: 'No account was found for this email.' });
+  }
+
+  if (user.emailVerified !== false) {
+    return res.json({
+      token: createAuthToken(user),
+      user: publicUser(user),
+      message: 'Email is already verified.',
+    });
+  }
+
+  if (!user.verificationCodeHash) {
+    return res.status(400).json({ error: 'No active verification code found. Please request a new code.' });
+  }
+
+  if (user.verificationCodeExpiresAt && Date.parse(user.verificationCodeExpiresAt) < Date.now()) {
+    return res.status(400).json({ error: 'This verification code has expired. Please request a new code.' });
+  }
+
+  if (user.verificationCodeHash !== hashActionToken(rawCode)) {
+    return res.status(400).json({ error: 'Incorrect verification code.' });
+  }
+
+  const verifiedUser = {
+    ...user,
+    emailVerified: true,
+    emailVerifiedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  delete verifiedUser.verificationCodeHash;
+  delete verifiedUser.verificationCodeExpiresAt;
+  delete verifiedUser.verificationTokenHash;
+  delete verifiedUser.verificationTokenExpiresAt;
+
+  users[userIndex] = verifiedUser;
+  writeUsers(users);
+
+  const welcomeEmail = await sendWelcomeEmail(verifiedUser);
+
+  if (!welcomeEmail.sent) {
+    console.error('Welcome email failed after code verification:', welcomeEmail.reason || 'Unknown email error');
+  } else {
+    console.log('Welcome email sent after code verification to:', verifiedUser.email);
+  }
+
+  return res.json({
+    token: createAuthToken(verifiedUser),
+    user: publicUser(verifiedUser),
+    welcomeEmailSent: welcomeEmail.sent,
+    message: welcomeEmail.sent
+      ? 'Email verified successfully. Welcome to MuseForge.'
+      : 'Email verified successfully. You can now continue.',
   });
 });
 
@@ -2265,17 +2375,13 @@ app.post('/auth/verify-email', async (req, res) => {
 
   delete verifiedUser.verificationTokenHash;
   delete verifiedUser.verificationTokenExpiresAt;
+  delete verifiedUser.verificationCodeHash;
+  delete verifiedUser.verificationCodeExpiresAt;
 
   users[userIndex] = verifiedUser;
   writeUsers(users);
 
   const welcomeEmail = await sendWelcomeEmail(verifiedUser);
-
-  if (!welcomeEmail.sent) {
-    console.error('Welcome email failed after verification:', welcomeEmail.reason || 'Unknown email error');
-  } else {
-    console.log('Welcome email sent after verification to:', verifiedUser.email);
-  }
 
   return res.json({
     token: createAuthToken(verifiedUser),
@@ -2283,11 +2389,12 @@ app.post('/auth/verify-email', async (req, res) => {
     welcomeEmailSent: welcomeEmail.sent,
     message: welcomeEmail.sent
       ? 'Email verified successfully. Welcome to MuseForge.'
-      : 'Email verified successfully. You can now log in.',
+      : 'Email verified successfully. You can now continue.',
   });
 });
 app.post('/auth/resend-verification', async (req, res) => {
   const email = normalizeEmail(req.body?.email);
+
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: 'Please enter a valid email address.' });
   }
@@ -2295,28 +2402,45 @@ app.post('/auth/resend-verification', async (req, res) => {
   const users = readUsers();
   const userIndex = users.findIndex(user => normalizeEmail(user.email) === email);
   const user = userIndex >= 0 ? users[userIndex] : null;
-  let rawVerificationToken = '';
-  let verificationEmail = { sent: false };
 
-  if (user && user.emailVerified === false) {
-    rawVerificationToken = createActionToken();
-    users[userIndex] = {
-      ...user,
-      verificationTokenHash: hashActionToken(rawVerificationToken),
-      verificationTokenExpiresAt: new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    writeUsers(users);
-    verificationEmail = await sendVerificationEmail(users[userIndex], rawVerificationToken);
+  if (!user) {
+    return res.status(404).json({ error: 'No account was found for this email.' });
+  }
+
+  if (user.emailVerified !== false) {
+    return res.status(409).json({ error: 'This account is already verified. Please log in.' });
+  }
+
+  const rawVerificationCode = createVerificationCode();
+
+  users[userIndex] = {
+    ...user,
+    verificationCodeHash: hashActionToken(rawVerificationCode),
+    verificationCodeExpiresAt: new Date(Date.now() + (10 * 60 * 1000)).toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  delete users[userIndex].verificationTokenHash;
+  delete users[userIndex].verificationTokenExpiresAt;
+
+  writeUsers(users);
+
+  const verificationEmail = await sendVerificationCodeEmail(users[userIndex], rawVerificationCode);
+
+  if (!verificationEmail.sent) {
+    console.error('Resend verification code failed:', verificationEmail.reason || 'Unknown email error');
+  } else {
+    console.log('Verification code resent to:', email);
   }
 
   return res.json({
-    message: 'If an unverified account exists for that email, a new verification link has been sent.',
-    emailSent: verificationEmail.sent,
-    ...(process.env.NODE_ENV === 'test' && rawVerificationToken ? { testVerificationToken: rawVerificationToken } : {}),
+    email,
+    verificationEmailSent: verificationEmail.sent,
+    message: verificationEmail.sent
+      ? `A new 6-digit verification code has been sent to ${email}.`
+      : 'Could not send the verification code. Please try again.',
   });
 });
-
 app.post('/auth/forgot-password', async (req, res) => {
   const email = normalizeEmail(req.body?.email);
 

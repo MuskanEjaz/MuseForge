@@ -1716,24 +1716,77 @@ function AuthScreen({ mode, onBack, onSwitch, onSubmit, onGoogleSubmit, onForgot
   );
 }
 
-function VerificationPendingScreen({ email, onResend, onLogin, loading, error, notice }) {
+function VerificationPendingScreen({
+  email,
+  verificationCode,
+  onCodeChange,
+  onVerifyCode,
+  onResend,
+  onLogin,
+  loading,
+  error,
+  notice,
+}) {
+  const code = String(verificationCode || '');
+
   return (
     <main className="auth-page">
       <section className="auth-card auth-action-card" aria-label="Verify your email">
-        <div className="auth-action-icon" aria-hidden="true">✉</div>
-        <p className="auth-eyebrow">ONE SMALL STEP</p>
-        <h1>Check your email</h1>
-        <p className="auth-intro">We sent a verification link to <strong>{email || 'your email address'}</strong>. Open it to activate your account.</p>
-        <div className="auth-help-box">The link is valid for 24 hours. Also check your Spam or Junk folder.</div>
+        <div className="auth-action-icon" aria-hidden="true">#</div>
+        <p className="auth-eyebrow">EMAIL VERIFICATION</p>
+        <h1>Enter verification code</h1>
+        <p className="auth-intro">
+          We sent a 6-digit code to <strong>{email || 'your email address'}</strong>.
+          Enter it below to activate your account.
+        </p>
+
         {notice && <div className="auth-notice" role="status">{notice}</div>}
         {error && <div className="auth-error" role="alert">{error}</div>}
-        <button type="button" className="auth-submit" onClick={onResend} disabled={loading}>{loading ? 'Sending…' : 'Resend verification email'}</button>
-        <button type="button" className="auth-secondary-action" onClick={onLogin}>Back to log in</button>
+
+        <form className="auth-code-form" onSubmit={onVerifyCode}>
+          <label className="auth-code-label" htmlFor="verification-code">Verification code</label>
+          <input
+            id="verification-code"
+            className="auth-code-input"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            value={code}
+            onChange={(event) => onCodeChange(event.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="000000"
+            aria-label="6 digit verification code"
+          />
+
+          <button
+            type="submit"
+            className="auth-submit"
+            disabled={loading || code.length !== 6}
+          >
+            {loading ? 'Verifying…' : 'Verify account'}
+          </button>
+        </form>
+
+        <button
+          type="button"
+          className="auth-secondary-action"
+          onClick={onResend}
+          disabled={loading}
+        >
+          {loading ? 'Sending…' : 'Resend code'}
+        </button>
+
+        <button type="button" className="auth-link-button" onClick={onLogin}>
+          Back to log in
+        </button>
+
+        <div className="auth-help-box">
+          The code expires in 10 minutes. Also check your Spam or Junk folder.
+        </div>
       </section>
     </main>
   );
 }
-
 function ForgotPasswordScreen({ onBack, onSubmit, loading, error, notice }) {
   const [email, setEmail] = useState('');
   const submit = (event) => {
@@ -1832,6 +1885,7 @@ function App() {
   const [authError, setAuthError] = useState('');
   const [authNotice, setAuthNotice] = useState('');
   const [pendingEmail, setPendingEmail] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
   const [showLanding, setShowLanding] = useState(true);
   const [selectedCreatorType, setSelectedCreatorType] = useState(null);
   const [name, setName] = useState("");
@@ -2252,7 +2306,8 @@ function App() {
 
 if (data.pendingVerification) {
   setPendingEmail(data.email || email);
-  setAuthNotice(data.message || 'Check your email for the verification link.');
+  setVerificationCode('');
+  setAuthNotice(data.message || 'Enter the 6-digit verification code we sent to your email.');
   setAuthView('verify-pending');
   return;
 }
@@ -2286,6 +2341,43 @@ completeAuthentication(data, mode === 'signup' ? 'Account created successfully.'
     }
   };
 
+  const handleVerifyCode = async (event) => {
+    if (event) event.preventDefault();
+
+    const code = String(verificationCode || '').replace(/\D/g, '').slice(0, 6);
+
+    if (!pendingEmail) {
+      setAuthError('Please sign up again so we know which email to verify.');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(code)) {
+      setAuthError('Please enter the 6-digit verification code.');
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthError('');
+    setAuthNotice('');
+
+    try {
+      const response = await fetchFromBackend('/auth/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingEmail, code }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Verification failed.');
+
+      setVerificationCode('');
+      completeAuthentication(data, data.message || 'Email verified successfully.');
+    } catch (error) {
+      setAuthError(readableAuthError(error));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
   const handleResendVerification = async () => {
     if (!pendingEmail) {
       setAuthError('Please return to Sign up and enter your email again.');
@@ -2302,7 +2394,8 @@ completeAuthentication(data, mode === 'signup' ? 'Account created successfully.'
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'Could not resend the verification email.');
-      setAuthNotice(data.message || 'A new verification link has been sent.');
+      setVerificationCode('');
+      setAuthNotice(data.message || 'A new verification code has been sent.');
     } catch (error) {
       setAuthError(readableAuthError(error));
     } finally {
@@ -3540,8 +3633,7 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     ${contactHTML}
   </div>
   <div class="footer">
-    <p>Created with MuseForge — Built with IBM Bob</p>
-    <span class="badge">Powered by IBM Bob × Groq AI</span>
+    <p>Created with MuseForge</p>
   </div>
   <script>
     document.querySelectorAll('.hero-nav-link').forEach(l => {
@@ -3685,11 +3777,14 @@ ${section.items.map(item => `- ${item.heading}${item.desc ? `: ${item.desc}` : '
     return (
       <VerificationPendingScreen
         email={pendingEmail}
+        verificationCode={verificationCode}
+        onCodeChange={setVerificationCode}
+        onVerifyCode={handleVerifyCode}
         loading={authLoading}
         error={authError}
         notice={authNotice}
         onResend={handleResendVerification}
-        onLogin={() => { setAuthError(''); setAuthNotice(''); setAuthView('login'); }}
+        onLogin={() => { setAuthError(''); setAuthNotice(''); setVerificationCode(''); setAuthView('login'); }}
       />
     );
   }

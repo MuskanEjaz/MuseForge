@@ -7977,3 +7977,254 @@ body:has(.form-with-image),
     font-weight: 850 !important;
   }
 }
+
+/* ===== SAFE FIX: verification code input UI only ===== */
+.auth-code-form {
+  width: 100% !important;
+  display: grid !important;
+  gap: 12px !important;
+  margin-top: 18px !important;
+}
+
+.auth-code-label {
+  text-align: left !important;
+  color: #3b3150 !important;
+  font-size: 0.9rem !important;
+  font-weight: 800 !important;
+}
+
+.auth-code-input {
+  width: 100% !important;
+  height: 56px !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(124, 58, 237, 0.22) !important;
+  background: #ffffff !important;
+  color: #17193e !important;
+  text-align: center !important;
+  font-size: 1.45rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.32em !important;
+  padding: 0 14px 0 22px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+.auth-code-input:focus {
+  border-color: #7c3aed !important;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12) !important;
+}
+
+.auth-link-button {
+  margin-top: 12px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #6d28d9 !important;
+  font-size: 0.96rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+.auth-link-button:hover {
+  color: #4c1d95 !important;
+  text-decoration: underline !important;
+}
+
+.auth-action-card .auth-help-box {
+  margin-top: 16px !important;
+}
+
+
+/* ===== SAFE FIX: landing text readability + footer polish ===== */
+
+/* Navbar links + logged-in area */
+.new-landing-page .nav-links a,
+.new-landing-page .nav-links button,
+.new-landing-page .landing-nav a,
+.new-landing-page .landing-nav button,
+.new-landing-page .user-greeting,
+.new-landing-page .nav-user,
+.new-landing-page .nav-user span {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* Hero small badge, paragraph, helper line */
+.new-landing-page .hero-badge,
+.new-landing-page .hero-kicker,
+.new-landing-page .hero-eyebrow,
+.new-landing-page .section-kicker,
+.new-landing-page .templates-copy .section-kicker {
+  font-size: 0.84rem !important;
+  letter-spacing: 0.16em !important;
+  font-weight: 900 !important;
+}
+
+.new-landing-page .hero-copy p,
+.new-landing-page .hero p,
+.new-landing-page .hero-subtitle,
+.new-landing-page .hero-lead,
+.new-landing-page .section-lead,
+.new-landing-page .templates-copy p,
+.new-landing-page .reviews-header p {
+  font-size: 1.05rem !important;
+  line-height: 1.65 !important;
+  font-weight: 500 !important;
+}
+
+.new-landing-page .hero-trust-row,
+.new-landing-page .hero-trust-row span,
+.new-landing-page .hero-meta,
+.new-landing-page .hero-meta span {
+  font-size: 0.95rem !important;
+  line-height: 1.5 !important;
+  font-weight: 650 !important;
+}
+
+/* Main CTA buttons text only */
+.new-landing-page .hero-actions button,
+.new-landing-page .hero-actions a,
+.new-landing-page .primary-cta,
+.new-landing-page .secondary-cta,
+.new-landing-page .start-btn,
+.new-landing-page .watch-btn,
+.new-landing-page .nav-cta,
+.new-landing-page .logout-btn {
+  font-size: 1.02rem !important;
+  font-weight: 850 !important;
+}
+
+/* Creator cards text only */
+.new-landing-page .creator-card h3,
+.new-landing-page .creator-card strong,
+.new-landing-page .creator-card-title {
+  font-size: 1.12rem !important;
+  line-height: 1.28 !important;
+  font-weight: 900 !important;
+}
+
+.new-landing-page .creator-card p,
+.new-landing-page .creator-card small,
+.new-landing-page .creator-card-description {
+  font-size: 0.98rem !important;
+  line-height: 1.55 !important;
+  font-weight: 550 !important;
+}
+
+/* Reviews section text + stars */
+.new-landing-page .reviews-header h2 {
+  font-size: clamp(2rem, 3.25vw, 3.35rem) !important;
+  line-height: 1.12 !important;
+}
+
+.new-landing-page .review-stars,
+.new-landing-page .review-stars span,
+.new-landing-page .stars,
+.new-landing-page .stars span {
+  font-size: 1.35rem !important;
+  letter-spacing: 0.1em !important;
+}
+
+.new-landing-page .reviews-empty,
+.new-landing-page .reviews-empty p,
+.new-landing-page .review-empty,
+.new-landing-page .review-card p,
+.new-landing-page .review-tabs,
+.new-landing-page .review-tabs button {
+  font-size: 1rem !important;
+  line-height: 1.55 !important;
+  font-weight: 600 !important;
+}
+
+.new-landing-page .reviews-actions button,
+.new-landing-page .reviews-actions a,
+.new-landing-page .review-submit-btn,
+.new-landing-page .review-view-btn {
+  font-size: 1.02rem !important;
+  font-weight: 850 !important;
+}
+
+/* Feature/template/how-it-works card text */
+.new-landing-page .feature-card h3,
+.new-landing-page .features-grid article h3,
+.new-landing-page .template-preview-card strong,
+.new-landing-page .steps-grid article h3 {
+  font-size: 1.14rem !important;
+  line-height: 1.3 !important;
+  font-weight: 900 !important;
+}
+
+.new-landing-page .feature-card p,
+.new-landing-page .features-grid article p,
+.new-landing-page .template-preview-card small,
+.new-landing-page .steps-grid article p {
+  font-size: 0.99rem !important;
+  line-height: 1.58 !important;
+  font-weight: 550 !important;
+}
+
+.new-landing-page .steps-grid article b {
+  font-size: 1.7rem !important;
+  font-weight: 900 !important;
+}
+
+/* Footer polish */
+.new-landing-page .landing-footer {
+  min-height: 88px !important;
+  padding: 28px 20px !important;
+  background: linear-gradient(135deg, #14072b 0%, #2d1361 55%, #3b1a7a 100%) !important;
+  border-top: 1px solid rgba(216, 180, 254, 0.24) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.new-landing-page .landing-footer p,
+.new-landing-page .landing-footer span {
+  font-size: 1rem !important;
+  line-height: 1.65 !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.035em !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.new-landing-page .landing-footer strong {
+  font-size: 1.04rem !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.08em !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 18px rgba(216, 180, 254, 0.28) !important;
+}
+
+/* Mobile: readable but not oversized */
+@media (max-width: 760px) {
+  .new-landing-page .hero-copy p,
+  .new-landing-page .hero p,
+  .new-landing-page .section-lead,
+  .new-landing-page .templates-copy p,
+  .new-landing-page .reviews-header p {
+    font-size: 0.98rem !important;
+  }
+
+  .new-landing-page .creator-card h3,
+  .new-landing-page .feature-card h3,
+  .new-landing-page .features-grid article h3,
+  .new-landing-page .template-preview-card strong,
+  .new-landing-page .steps-grid article h3 {
+    font-size: 1.08rem !important;
+  }
+
+  .new-landing-page .creator-card p,
+  .new-landing-page .feature-card p,
+  .new-landing-page .features-grid article p,
+  .new-landing-page .template-preview-card small,
+  .new-landing-page .steps-grid article p {
+    font-size: 0.95rem !important;
+  }
+
+  .new-landing-page .landing-footer p,
+  .new-landing-page .landing-footer span {
+    font-size: 0.92rem !important;
+  }
+}
+
+/* ===== END SAFE FIX: landing text readability + footer polish ===== */
