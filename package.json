@@ -1,49 +1,33 @@
 {
-  "name": "museforge",
-  "version": "0.1.0",
+  "name": "museforge-server",
+  "version": "1.0.0",
   "private": true,
-  "dependencies": {
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^13.5.0",
-    "axios": "^1.17.0",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "multer": "^2.1.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+  "description": "MuseForge — AI Creative Identity Studio. IBM Granite (watsonx.ai) + IBM Docling, with FactLock grounding.",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "server": "npm --prefix backend start",
-    "dev": "node start-all.js",
-    "test:ci": "react-scripts test --watchAll=false",
-    "verify": "npm run build && npm run test:ci && npm run test:backend",
-    "test:backend": "npm --prefix backend test"
+    "start": "node server.js",
+    "verify:ibm": "node verify-ibm.js",
+    "test:lang": "node language-e2e-test.js",
+    "test:regen": "node regenerate-e2e-test.js",
+    "test:cv": "node cv-test-harness.js 300",
+    "test:links": "node links-test.js",
+    "test:factlock": "node factlock-test.js",
+    "test": "node adversarial-test.js && node factlock-test.js && node lang-test.js && node lang-headings-test.js && node links-test.js"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "google-auth-library": "^9.14.0",
+    "helmet": "^7.1.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.14",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^3.11.174",
+    "pdfreader": "^3.0.5"
   }
 }

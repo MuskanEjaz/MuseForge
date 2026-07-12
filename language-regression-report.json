@@ -1,0 +1,56 @@
+{
+  "pass": 0,
+  "fail": 10,
+  "results": [
+    {
+      "label": "english-cv -> English",
+      "targetLanguage": "English",
+      "error": "fetch failed"
+    },
+    {
+      "label": "roman-urdu-input -> Spanish",
+      "targetLanguage": "Spanish",
+      "error": "fetch failed"
+    },
+    {
+      "label": "mixed-input -> French",
+      "targetLanguage": "French",
+      "error": "fetch failed"
+    },
+    {
+      "label": "english-cv -> German",
+      "targetLanguage": "German",
+      "error": "fetch failed"
+    },
+    {
+      "label": "roman-urdu-input -> Italian",
+      "targetLanguage": "Italian",
+      "error": "fetch failed"
+    },
+    {
+      "label": "mixed-input -> Portuguese",
+      "targetLanguage": "Portuguese",
+      "error": "fetch failed"
+    },
+    {
+      "label": "english-cv -> Turkish",
+      "targetLanguage": "Turkish",
+      "error": "fetch failed"
+    },
+    {
+      "label": "roman-urdu-input -> Chinese",
+      "targetLanguage": "Chinese",
+      "error": "fetch failed"
+    },
+    {
+      "label": "mixed-input -> Japanese",
+      "targetLanguage": "Japanese",
+      "error": "fetch failed"
+    },
+    {
+      "label": "english-cv -> Korean",
+      "targetLanguage": "Korean",
+      "error": "fetch failed"
+    }
+  ]
+}

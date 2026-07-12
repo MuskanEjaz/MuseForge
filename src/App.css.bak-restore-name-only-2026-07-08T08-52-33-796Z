@@ -8393,7 +8393,19 @@ body:has(.form-with-image),
 }
 
 
-/* ===== FINAL PUBLIC PORTFOLIO FOOTER POLISH ===== */
+/* ===== FINAL PUBLIC PORTFOLIO NAME + FOOTER POLISH ===== */
+.public-portfolio-page .public-portfolio-hero h1,
+.public-portfolio-page .public-portfolio-name,
+.public-portfolio-page .public-portfolio-title,
+.public-portfolio-page.portfolio-preview-shell h1.public-portfolio-name {
+  display: inline-block !important;
+  background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 58%, #f472b6 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+}
 
 .public-portfolio-page .public-portfolio-footer,
 .public-portfolio-page footer,
@@ -8443,4 +8455,4 @@ body:has(.form-with-image),
   font-weight: 800 !important;
   box-shadow: 0 16px 35px rgba(236, 72, 153, 0.24) !important;
 }
-/* ===== END FINAL PUBLIC PORTFOLIO FOOTER POLISH ===== */
+/* ===== END FINAL PUBLIC PORTFOLIO NAME + FOOTER POLISH ===== */

@@ -23,6 +23,7 @@
     "nodemailer": "^9.0.0",
     "openai": "^6.42.0",
     "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^3.11.174",
     "pdfreader": "^3.0.8"
   }
 }

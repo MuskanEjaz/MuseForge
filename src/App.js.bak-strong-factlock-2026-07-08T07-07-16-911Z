@@ -190,16 +190,14 @@ const LANGUAGE_OPTIONS = [
   'Italian',
   'Portuguese',
   'Dutch',
-  'Polish',
   'Turkish',
+  'Arabic',
   'Chinese',
   'Japanese',
   'Korean',
   'Russian',
   'Indonesian',
-  'Vietnamese',
-  'Arabic',
-  'Urdu'
+  'Vietnamese'
 ];
 
 const normalizeClientOutputLanguage = (language = '') => {
@@ -717,10 +715,240 @@ const languageFamilyName = (language = 'English') => {
   return 'english';
 };
 
+const LOCAL_PHRASES = {
+  urdu: {
+    'qamiyabi': 'کامیابی',
+    'sb sy acha singer award': 'سب سے اچھے گلوکار کا ایوارڈ',
+    'sab sy acha singer award': 'سب سے اچھے گلوکار کا ایوارڈ',
+    'best singer award': 'بہترین گلوکار کا ایوارڈ',
+    'ham safar': 'ہم سفر',
+    'humsafar': 'ہم سفر',
+    'teray bin': 'تیرے بن',
+    'tery bin': 'تیرے بن',
+    'teray wastay': 'تیرے واسطے',
+    'siyara': 'سیارا',
+    'nachna': 'رقص',
+    'i composed the music for the drama ham safar which became very popular': 'میں نے ڈرامہ ہم سفر کے لیے موسیقی ترتیب دی، جو بہت مقبول ہوئی۔',
+    'i learned a special dance for ham safar and the audience greatly appreciated the steps': 'میں نے ہم سفر کے لیے ایک خاص رقص سیکھا، اور حاضرین نے ان اسٹیپس کو بہت سراہا۔',
+    'tery liyay': 'تیرے لیے',
+    'tery liyaye': 'تیرے لیے',
+    'music performance': 'موسیقی اور پرفارمنس',
+    'music acting': 'موسیقی اور اداکاری',
+    'karachi, pakistan': 'کراچی، پاکستان',
+    'live performance siyara ma': 'سیارا میں لائیو پرفارمنس',
+    'ma na siyara ganay ky liyai dance sikha r usky steps bht hit howay': 'میں نے سیارا گانے کے لیے رقص سیکھا اور اس کے اسٹیپس بہت مقبول ہوئے۔',
+  },
+  'roman urdu': {
+    'qamiyabi': 'Qamiyabi',
+    'sb sy acha singer award': 'Sab se achay singer ka award',
+    'best singer award': 'Best singer award',
+    'ham safar': 'Humsafar',
+    'humsafar': 'Humsafar',
+    'teray bin': 'Teray Bin',
+    'teray wastay': 'Tumhare liye',
+    'siyara': 'Siyara',
+    'nachna': 'Naachna',
+    'i composed the music for the drama ham safar which became very popular': 'Maine drama Humsafar ke liye music compose kiya, jo bohat mashhoor hua.',
+    'i learned a special dance for ham safar and the audience greatly appreciated the steps': 'Maine Humsafar ke liye ek khaas dance seekha aur audience ne us ke steps ko bohat pasand kiya.',
+    'tery liyay': 'Tumhare liye',
+    'tery liyaye': 'Tumhare liye',
+    'music performance': 'Music aur Performance',
+    'karachi, pakistan': 'Karachi, Pakistan',
+    'live performance siyara ma': 'Siyara mein live performance',
+    'ma na siyara ganay ky liyai dance sikha r usky steps bht hit howay': 'Maine Siyara gaanay ke liye dance seekha aur us ke steps bohat hit hue.',
+  },
+  hindi: {
+    'qamiyabi': 'सफलता',
+    'sb sy acha singer award': 'सर्वश्रेष्ठ गायक पुरस्कार',
+    'sab sy acha singer award': 'सर्वश्रेष्ठ गायक पुरस्कार',
+    'best singer award': 'सर्वश्रेष्ठ गायक पुरस्कार',
+    'ham safar': 'हमसफ़र',
+    'humsafar': 'हमसफ़र',
+    'teray bin': 'तेरे बिना',
+    'teray wastay': 'तेरे वास्ते',
+    'siyara': 'सियारा',
+    'nachna': 'नृत्य',
+    'i composed the music for the drama ham safar which became very popular': 'मैंने नाटक हमसफ़र के लिए संगीत तैयार किया, जो बहुत लोकप्रिय हुआ।',
+    'i learned a special dance for ham safar and the audience greatly appreciated the steps': 'मैंने हमसफ़र के लिए एक खास नृत्य सीखा और दर्शकों ने उसके स्टेप्स को बहुत सराहा।',
+    'tery liyay': 'तुम्हारे लिए',
+    'tery liyaye': 'तुम्हारे लिए',
+    'music performance': 'संगीत और प्रदर्शन',
+    'karachi, pakistan': 'कराची, पाकिस्तान',
+    'live performance siyara ma': 'सियारा में लाइव प्रदर्शन',
+    'ma na siyara ganay ky liyai dance sikha r usky steps bht hit howay': 'मैंने सियारा गाने के लिए नृत्य सीखा और उसके स्टेप्स बहुत लोकप्रिय हुए।',
+  },
+  arabic: {
+    'qamiyabi': 'النجاح',
+    'sb sy acha singer award': 'جائزة أفضل مغنٍ',
+    'sab sy acha singer award': 'جائزة أفضل مغنٍ',
+    'best singer award': 'جائزة أفضل مغنٍ',
+    'ham safar': 'رفيق الطريق',
+    'humsafar': 'رفيق الطريق',
+    'teray bin': 'بدونك',
+    'teray wastay': 'لأجلك',
+    'siyara': 'سيارا',
+    'nachna': 'الرقص',
+    'i composed the music for the drama ham safar which became very popular': 'قمت بتأليف الموسيقى لمسلسل رفيق الطريق، وقد أصبح مشهورًا جدًا.',
+    'i learned a special dance for ham safar and the audience greatly appreciated the steps': 'تعلمت رقصة خاصة لرفيق الطريق، وقد أعجب الجمهور بالخطوات كثيرًا.',
+    'tery liyay': 'من أجلك',
+    'tery liyaye': 'من أجلك',
+    'music performance': 'الموسيقى والأداء',
+    'karachi, pakistan': 'كراتشي، باكستان',
+    'live performance siyara ma': 'أداء مباشر في سيارا',
+    'ma na siyara ganay ky liyai dance sikha r usky steps bht hit howay': 'تعلمت الرقص لأغنية سيارا وأصبحت خطواتها شائعة جدًا.',
+  },
+  spanish: {
+    'qamiyabi': 'Éxito',
+    'sb sy acha singer award': 'Premio al mejor cantante',
+    'sab sy acha singer award': 'Premio al mejor cantante',
+    'best singer award': 'Premio al mejor cantante',
+    'ham safar': 'Compañero de viaje',
+    'humsafar': 'Compañero de viaje',
+    'teray bin': 'Sin ti',
+    'teray wastay': 'Para ti',
+    'siyara': 'Siyara',
+    'nachna': 'Bailar',
+    'i composed the music for the drama ham safar which became very popular': 'Compuse la música para el drama Compañero de viaje, que se volvió muy popular.',
+    'i learned a special dance for ham safar and the audience greatly appreciated the steps': 'Aprendí un baile especial para Compañero de viaje y el público apreció mucho los pasos.',
+    'tery liyay': 'Para ti',
+    'tery liyaye': 'Para ti',
+    'music performance': 'Música y actuación',
+    'music acting': 'Música y actuación',
+    'karachi, pakistan': 'Karachi, Pakistán',
+    'live performance siyara ma': 'Presentación en vivo en Siyara',
+    'ma na siyara ganay ky liyai dance sikha r usky steps bht hit howay': 'Aprendí a bailar para Siyara y sus pasos se volvieron muy populares.',
+  },
+  french: {
+    'qamiyabi': 'Réussite',
+    'sb sy acha singer award': 'Prix du meilleur chanteur',
+    'best singer award': 'Prix du meilleur chanteur',
+    'ham safar': 'Compagnon de voyage',
+    'teray bin': 'Sans toi',
+    'teray wastay': 'Pour toi',
+    'siyara': 'Siyara',
+    'nachna': 'Danser',
+    'i composed the music for the drama ham safar which became very popular': 'J’ai composé la musique du drame Compagnon de voyage, qui est devenu très populaire.',
+    'i learned a special dance for ham safar and the audience greatly appreciated the steps': 'J’ai appris une danse spéciale pour Compagnon de voyage, et le public a beaucoup apprécié les pas.',
+    'tery liyay': 'Pour toi',
+    'tery liyaye': 'Pour toi',
+    'music performance': 'Musique et performance',
+    'karachi, pakistan': 'Karachi, Pakistan',
+    'live performance siyara ma': 'Performance en direct dans Siyara',
+    'ma na siyara ganay ky liyai dance sikha r usky steps bht hit howay': 'J’ai appris une danse pour Siyara et ses pas sont devenus très populaires.',
+  },
+  german: {
+    'qamiyabi': 'Erfolg',
+    'sb sy acha singer award': 'Preis für den besten Sänger',
+    'best singer award': 'Preis für den besten Sänger',
+    'ham safar': 'Weggefährte',
+    'teray bin': 'Ohne dich',
+    'teray wastay': 'Für dich',
+    'siyara': 'Siyara',
+    'nachna': 'Tanzen',
+    'i composed the music for the drama ham safar which became very popular': 'Ich habe die Musik für das Drama Weggefährte komponiert, das sehr beliebt wurde.',
+    'i learned a special dance for ham safar and the audience greatly appreciated the steps': 'Ich habe für Weggefährte einen besonderen Tanz gelernt, und das Publikum hat die Schritte sehr geschätzt.',
+    'tery liyay': 'Für dich',
+    'tery liyaye': 'Für dich',
+    'music performance': 'Musik und Auftritt',
+    'karachi, pakistan': 'Karachi, Pakistan',
+    'live performance siyara ma': 'Live-Auftritt in Siyara',
+    'ma na siyara ganay ky liyai dance sikha r usky steps bht hit howay': 'Ich habe für Siyara einen Tanz gelernt und seine Schritte wurden sehr beliebt.',
+  },
+  turkish: {
+    'qamiyabi': 'Başarı',
+    'sb sy acha singer award': 'En iyi şarkıcı ödülü',
+    'best singer award': 'En iyi şarkıcı ödülü',
+    'ham safar': 'Yol arkadaşı',
+    'teray bin': 'Sensiz',
+    'teray wastay': 'Senin için',
+    'siyara': 'Siyara',
+    'nachna': 'Dans etmek',
+    'i composed the music for the drama ham safar which became very popular': 'Çok popüler olan Yol arkadaşı dizisi için müzik besteledim.',
+    'i learned a special dance for ham safar and the audience greatly appreciated the steps': 'Yol arkadaşı için özel bir dans öğrendim ve izleyiciler adımları çok beğendi.',
+    'tery liyay': 'Senin için',
+    'tery liyaye': 'Senin için',
+    'music performance': 'Müzik ve performans',
+    'karachi, pakistan': 'Karaçi, Pakistan',
+    'live performance siyara ma': 'Siyara için canlı performans',
+    'ma na siyara ganay ky liyai dance sikha r usky steps bht hit howay': 'Siyara için dans öğrendim ve adımları çok popüler oldu.',
+  },
+  chinese: {
+    'qamiyabi': '成功',
+    'sb sy acha singer award': '最佳歌手奖',
+    'best singer award': '最佳歌手奖',
+    'ham safar': '同行者',
+    'teray bin': '没有你',
+    'teray wastay': '为你',
+    'siyara': '西亚拉',
+    'nachna': '舞蹈',
+    'i composed the music for the drama ham safar which became very popular': '我为电视剧《同行者》创作了音乐，这部剧非常受欢迎。',
+    'i learned a special dance for ham safar and the audience greatly appreciated the steps': '我为《同行者》学习了一支特别的舞蹈，观众非常欣赏这些舞步。',
+    'tery liyay': '献给你',
+    'tery liyaye': '献给你',
+    'music performance': '音乐与表演',
+    'karachi, pakistan': '卡拉奇，巴基斯坦',
+    'live performance siyara ma': '在《西亚拉》中的现场表演',
+    'ma na siyara ganay ky liyai dance sikha r usky steps bht hit howay': '我为《西亚拉》学习了舞蹈，它的舞步非常受欢迎。',
+  },
+  japanese: {
+    'qamiyabi': '成功',
+    'sb sy acha singer award': '最優秀歌手賞',
+    'best singer award': '最優秀歌手賞',
+    'ham safar': '旅の仲間',
+    'teray bin': '君なしで',
+    'teray wastay': '君のために',
+    'siyara': 'シヤラ',
+    'nachna': 'ダンス',
+    'i composed the music for the drama ham safar which became very popular': '私はドラマ「旅の仲間」の音楽を作曲し、この作品はとても人気になりました。',
+    'i learned a special dance for ham safar and the audience greatly appreciated the steps': '私は「旅の仲間」のために特別なダンスを学び、観客はそのステップをとても高く評価しました。',
+    'tery liyay': '君のために',
+    'tery liyaye': '君のために',
+    'music performance': '音楽とパフォーマンス',
+    'karachi, pakistan': 'カラチ、パキスタン',
+    'live performance siyara ma': 'シヤラでのライブパフォーマンス',
+    'ma na siyara ganay ky liyai dance sikha r usky steps bht hit howay': '私はシヤラのためにダンスを学び、そのステップはとても人気になりました。',
+  },
+  korean: {
+    'qamiyabi': '성공',
+    'sb sy acha singer award': '최우수 가수상',
+    'best singer award': '최우수 가수상',
+    'ham safar': '동행자',
+    'teray bin': '너 없이',
+    'teray wastay': '너를 위해',
+    'siyara': '시아라',
+    'nachna': '춤',
+    'i composed the music for the drama ham safar which became very popular': '저는 드라마 동행자를 위해 음악을 작곡했고, 이 작품은 매우 큰 인기를 얻었습니다.',
+    'i learned a special dance for ham safar and the audience greatly appreciated the steps': '저는 동행자를 위해 특별한 춤을 배웠고, 관객들은 그 동작을 매우 좋아했습니다.',
+    'tery liyay': '너를 위해',
+    'tery liyaye': '너를 위해',
+    'music performance': '음악과 공연',
+    'karachi, pakistan': '카라치, 파키스탄',
+    'live performance siyara ma': '시아라 라이브 공연',
+    'ma na siyara ganay ky liyai dance sikha r usky steps bht hit howay': '저는 시아라를 위해 춤을 배웠고 그 동작들은 매우 인기를 얻었습니다.',
+  },
+};
+
 const transliterateNameForLanguage = (value = '', language = 'English') => {
-  // Proper names should stay unchanged unless AI explicitly returns a safe localized name.
-  // The previous hardcoded name table only worked for a few demo names and caused fake localization.
-  return String(value || '').trim();
+  const text = String(value || '').trim();
+  const family = languageFamilyName(language);
+  if (!text || ['english','roman urdu','spanish','french','german','turkish'].includes(family)) return text;
+  const known = {
+    fawad: { urdu: 'فواد', arabic: 'فواد', hindi: 'फ़वाद', chinese: '法瓦德', japanese: 'ファワド', korean: '파와드' },
+    khan: { urdu: 'خان', arabic: 'خان', hindi: 'खान', chinese: '汗', japanese: 'カーン', korean: '칸' },
+    muskan: { urdu: 'مسکان', arabic: 'مسكان', hindi: 'मुस्कान', chinese: '穆斯坎', japanese: 'ムスカン', korean: '무스칸' },
+    ejaz: { urdu: 'اعجاز', arabic: 'إعجاز', hindi: 'एजाज़', chinese: '伊jaz', japanese: 'イジャーズ', korean: '이자즈' },
+  };
+  return text.split(/(\s+)/).map(part => {
+    if (/^\s+$/.test(part)) return part;
+    const key = part.toLowerCase().replace(/[^a-z]/g, '');
+    return known[key]?.[family] || part;
+  }).join('\n');
+};
+
+const replaceInsensitive = (source = '', find = '', replacement = '') => {
+  if (!source || !find) return source;
+  const escaped = String(find).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+  return String(source).replace(new RegExp(escaped, 'ig'), replacement);
 };
 
 const localizeClientText = (value = '', language = 'English') => {
@@ -729,12 +957,20 @@ const localizeClientText = (value = '', language = 'English') => {
   if (!text) return text;
   if (family === 'english') return frontendLooksRomanUrdu(text) ? '' : text;
   if (hasUnexpectedScriptForLanguage(text, language)) return '';
+  const dict = LOCAL_PHRASES[family] || {};
+  const key = textKey(text);
+  if (dict[key]) return dict[key];
 
-  // No hardcoded demo phrase dictionaries. Real translation comes from the backend AI.
-  // Returning the factual original lets safeClientLocalized decide whether to keep it or
-  // fall back to generic localized text when the selected language requires translation.
-  return text;
+  let updated = text;
+  const phrases = Object.entries(dict).sort((a, b) => b[0].length - a[0].length);
+  for (const [phrase, translated] of phrases) {
+    if (!phrase || !translated) continue;
+    updated = replaceInsensitive(updated, phrase, translated);
+  }
+  if (frontendLeaksLatinForTarget(updated, language)) return frontendGenericLocalized(language, 'description') || '';
+  return updated;
 };
+
 
 const localizeLocationText = (value = '', language = 'English') => {
   const text = String(value || '').trim();
@@ -820,19 +1056,19 @@ const localizeOutputClient = (output = {}, fallback = {}) => {
   const fallbackSections = Array.isArray(fallback.customSections) ? fallback.customSections : [];
   const outputSections = Array.isArray(output.customSections) && output.customSections.length ? output.customSections : fallbackSections;
 
-const bioCandidate = stripPortfolioMarkdownHeadingClient(safeClientLocalized(
+const bioCandidate = safeClientLocalized(
   output.bio || output.description,
   fallback.bio || fallback.description || '',
   language,
   'description'
-));
+);
 
-let statementCandidate = stripPortfolioMarkdownHeadingClient(safeClientLocalized(
+let statementCandidate = safeClientLocalized(
   output.artistStatement || output.statement,
   fallback.artistStatement || fallback.statement || '',
   language,
   'description'
-));
+);
 
 if (
   textKey(statementCandidate) &&
@@ -1003,21 +1239,6 @@ const factLockTarget = (id = '') => {
 };
 
 const normalizeLocalizedOutput = (raw = {}, fallback = {}) => localizeOutputClient(raw || {}, fallback || {});
-
-const stripPortfolioMarkdownHeadingClient = (value = '') => stripAiReasoningClient(value)
-  .replace(/^#{1,6}\s+(Artist Bio|Bio|Artist Statement|Professional Statement|Statement)\s*/i, '')
-  .replace(/\n#{1,6}\s+(Artist Bio|Bio|Artist Statement|Professional Statement|Statement)\s*/gi, '\n')
-  .replace(/^["']|["']$/g, '')
-  .trim();
-
-const extractPortfolioSectionClient = (markdown = '', heading = '') => {
-  const source = String(markdown || '');
-  const cleanHeading = String(heading || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  if (!source.trim() || !cleanHeading) return '';
-  const pattern = new RegExp('(^|\\n)##\\s+' + cleanHeading + '\\s*\\n([\\s\\S]*?)(?=\\n##\\s+|$)', 'i');
-  const match = source.match(pattern);
-  return stripPortfolioMarkdownHeadingClient(match?.[2] || '');
-};
 
 const ensureMetaFactLockReviews = (reviews = [], localized = {}, context = {}) => {
   const list = Array.isArray(reviews) ? [...reviews] : [];
@@ -2716,44 +2937,29 @@ completeAuthentication(data, mode === 'signup' ? 'Account created successfully.'
               })))
           : [];
         const metaReviews = [];
-        const reviewLabels = applyCreatorHeadingLabels(
-          normalizedLocalized.labels || getPortfolioLabels(portfolioLanguage),
-          portfolioLanguage,
-          selectedCreatorType,
-          CREATOR_TYPES[selectedCreatorType]?.label || ''
-        );
-
-        const bioCandidateForReview = stripPortfolioMarkdownHeadingClient(
-          normalizedLocalized.bio ||
-          extractPortfolioSectionClient(data.portfolio, getBioHeading(selectedCreatorType, CREATOR_TYPES[selectedCreatorType]?.label || '')) ||
-          ''
-        );
-
-        const statementCandidateForReview = stripPortfolioMarkdownHeadingClient(
-          normalizedLocalized.artistStatement ||
-          extractPortfolioSectionClient(data.portfolio, getStatementHeading(selectedCreatorType, CREATOR_TYPES[selectedCreatorType]?.label || '')) ||
-          ''
-        );
-
-        const addMetaReview = (id, title, enhancedDesc) => {
-          const cleaned = stripPortfolioMarkdownHeadingClient(enhancedDesc);
-          if (!cleaned) return;
+        const reviewLabels = applyCreatorHeadingLabels(normalizedLocalized.labels || getPortfolioLabels(portfolioLanguage), portfolioLanguage, selectedCreatorType, CREATOR_TYPES[selectedCreatorType]?.label || '');
+        if (shouldEnhanceProjects && String(normalizedLocalized.bio || '').trim()) {
           metaReviews.push({
-            id,
-            title,
-            originalDesc: String(description || '').trim(),
-            enhancedDesc: cleaned,
+            id: 'meta:bio',
+            title: `${reviewLabels.artistBio || reviewLabels.about || 'Bio'} — portfolio intro`,
+            originalDesc: String(description || ''),
+            enhancedDesc: String(normalizedLocalized.bio || '').trim(),
             factsPreserved: [name, medium].filter(Boolean),
             unsupportedNewFacts: [],
             status: 'pending',
           });
-        };
-
-        if (shouldEnhanceProjects) {
-          addMetaReview('meta:bio', `${reviewLabels.artistBio || reviewLabels.about || 'Bio'} — portfolio profile`, bioCandidateForReview);
-          addMetaReview('meta:statement', `${reviewLabels.artistStatement || reviewLabels.statement || 'Statement'} — portfolio voice`, statementCandidateForReview);
         }
-
+        if (shouldEnhanceProjects && String(normalizedLocalized.artistStatement || '').trim()) {
+          metaReviews.push({
+            id: 'meta:statement',
+            title: `${reviewLabels.artistStatement || reviewLabels.statement || 'Statement'} — portfolio voice`,
+            originalDesc: String(description || ''),
+            enhancedDesc: String(normalizedLocalized.artistStatement || '').trim(),
+            factsPreserved: [name, medium].filter(Boolean),
+            unsupportedNewFacts: [],
+            status: 'pending',
+          });
+        }
         const reviews = [...metaReviews, ...projectReviews, ...sectionReviews];
         const reviewsWithMeta = ensureMetaFactLockReviews(reviews, normalizedLocalized, {
           description,
@@ -2850,18 +3056,11 @@ completeAuthentication(data, mode === 'signup' ? 'Account created successfully.'
           creatorType: selectedCreatorType || 'creator',
           medium,
           aiTone,
-          name,
-          itemKind: String(review.id).startsWith('meta:bio')
-            ? 'bio'
-            : String(review.id).startsWith('meta:statement')
-              ? 'statement'
-              : 'project',
         }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'Could not regenerate this item.');
-      const itemKind = String(review.id).startsWith('meta:bio') || String(review.id).startsWith('meta:statement') ? 'description' : 'project';
-      const regeneratedDesc = stripPortfolioMarkdownHeadingClient(safeClientLocalized(data.enhancedDesc || data.desc || '', review.originalDesc || '', portfolioLanguage, itemKind));
+      const regeneratedDesc = safeClientLocalized(data.enhancedDesc || data.desc || '', review.originalDesc || '', portfolioLanguage, 'project');
       setFactLockReviews(prev => prev.map(item => String(item.id) === String(id)
         ? {
             ...item,
@@ -2977,10 +3176,10 @@ completeAuthentication(data, mode === 'signup' ? 'Account created successfully.'
       setCustomSections(reviewedCustomSections);
       setLocalizedOutput(finalLocalized);
       const finalPortfolioText = `## ${getBioHeading(selectedCreatorType, CREATOR_TYPES[selectedCreatorType]?.label || '')}
-      ${stripPortfolioMarkdownHeadingClient(finalLocalized.bio || '')}
+      ${finalLocalized.bio || ''}
 
 ## ${getStatementHeading(selectedCreatorType, CREATOR_TYPES[selectedCreatorType]?.label || '')}
-${stripPortfolioMarkdownHeadingClient(finalLocalized.artistStatement || '')}`.trim();
+${finalLocalized.artistStatement || ''}`.trim();
 
 setPortfolio(finalPortfolioText || data.portfolio || '');
 setPortfolioReady(Boolean(finalPortfolioText || data.portfolio));
@@ -3351,7 +3550,7 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
       display: flex; align-items: center; gap: 12px;
     }
     .section-title::before { content: '◈'; font-size: 1rem; color: var(--mf-subheading); }
-    .section p { color: var(--mf-body); line-height: 1.9; font-size: 0.96rem; margin-bottom: 14px; font-weight: 300; }
+    .section p { color: var(--mf-body); line-height: 1.9; font-size: 1.05rem; margin-bottom: 14px; font-weight: 300; }
     .custom-items { display: flex; flex-direction: column; gap: 14px; }
     .custom-item { background: var(--mf-card); backdrop-filter: blur(10px); border-radius: 14px; padding: 18px 22px; border: 1px solid var(--mf-border); }
     .custom-item-heading { color: var(--mf-title); font-size: 1rem; font-weight: 600; margin-bottom: 4px; font-family: 'Inter', sans-serif; }
@@ -3384,10 +3583,10 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     .contact-link:hover { color: #a855f7; }
     .footer {
       margin: 56px auto 0;
-      padding: 18px 16px 24px;
+      padding: 20px 16px 26px;
       text-align: center;
-      border-top: 1px solid var(--mf-border);
-      background: var(--mf-footer);
+      border-top: 1px solid rgba(255, 255, 255, 0.20);
+      background: linear-gradient(135deg, #8b5cf6 0%, #6d36dc 100%);
       font-family: "Times New Roman", Times, serif;
     }
     .footer p {
@@ -3395,61 +3594,17 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
       align-items: center;
       justify-content: center;
       margin: 0;
-      padding: 10px 24px;
+      padding: 12px 30px;
       border-radius: 999px;
-      border: 1px solid rgba(168, 85, 247, 0.22);
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--mf-body);
+      background: linear-gradient(135deg, #8b5cf6 0%, #6d36dc 100%);
+      color: #ffffff;
       font-family: "Times New Roman", Times, serif;
-      font-size: 1rem;
+      font-size: 1.05rem;
       line-height: 1;
       font-weight: 700;
       letter-spacing: 0.01em;
-      box-shadow: none;
+      box-shadow: 0 14px 30px rgba(168, 85, 247, 0.26);
     }
-    /* Final MuseForge export polish: premium footer */
-
-    .footer {
-      margin: 36px 0 0;
-      min-height: 112px;
-      padding: 24px 14px 28px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      text-align: center;
-      border-top: 1px solid rgba(255, 255, 255, 0.16);
-      background: #0b0714;
-      font-family: 'Times New Roman', Times, serif;
-    }
-    .footer p {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      background: transparent;
-      color: rgba(255, 255, 255, 0.78);
-      box-shadow: none;
-      font-family: 'Times New Roman', Times, serif;
-      font-size: 0.96rem;
-      font-weight: 500;
-      line-height: 1.3;
-    }
-    .footer span {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 24px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-      color: #ffffff;
-      font-family: 'Times New Roman', Times, serif;
-      font-size: 0.96rem;
-      line-height: 1;
-      font-weight: 800;
-      box-shadow: 0 16px 35px rgba(236, 72, 153, 0.24);
-    }
-
     .badge { display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #6d36dc 100%); border-radius: 20px; padding: 8px 20px; font-size: 0.8rem; color: white; font-weight: 500; }
   </style>
 </head>
@@ -3471,7 +3626,9 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     ${customHTML}
     ${contactHTML}
   </div>
-  <div class="footer">\n    <p>Created with MuseForge — Built with IBM Bob</p>\n    <span>Powered by IBM Bob × Groq AI</span>\n  </div>
+  <div class="footer">
+    <p>Created by MuseForge</p>
+  </div>
   <script>
     document.querySelectorAll('.hero-nav-link').forEach(l => {
       l.addEventListener('click', e => {
@@ -3703,20 +3860,20 @@ ${section.items.map(item => `- ${item.heading}${item.desc ? `: ${item.desc}` : '
             <section className="hero-section" id="home">
               <div className="hero-container">
                 <div className="hero-left">
-                  <div className="hero-badge"><span className="badge-icon">✦</span>AI CREATIVE PARTNER · FACTLOCK VERIFIED</div>
+                  <div className="hero-badge"><span className="badge-icon">✦</span>FACTLOCK + AI PORTFOLIOS</div>
                   <h1 className="hero-heading">
                     <span className="heading-line">Transform Your Creative</span>
                     <span className="heading-line">Journey into a</span>
                     <span className="heading-line gradient-text">Stunning Portfolio</span>
                   </h1>
-                  <p className="hero-subtitle">Your work already exists. MuseForge turns it into a portfolio that speaks in your voice, in <strong>17 languages</strong>—and <strong>FactLock</strong> makes sure it never claims a single credit you didn't earn.</p>
+                  <p className="hero-subtitle">MuseForge uses AI to help creators craft professional, personalized portfolios in minutes—while <strong>FactLock</strong> keeps project descriptions reviewable and grounded in the user's real work.</p>
                   <div className="hero-buttons">
                     <button className="btn-primary" type="button" onClick={() => scrollToSection('creators')}>Start <span>→</span></button>
                     <button className="btn-secondary" type="button" onClick={() => setShowDemoVideo(true)}><span className="play-icon">▶</span>See How It Works</button>
                   </div>
                   <div className="hero-trust">
-                    <span className="trust-item"><span className="trust-icon">✦</span>Never invents an award, a client or a number</span>
-                    <span className="trust-item"><span className="trust-icon">♢</span>Write in any language, publish in 17</span>
+                    <span className="trust-item"><span className="trust-icon">✦</span>No fake achievements added automatically</span>
+                    <span className="trust-item"><span className="trust-icon">♢</span>Secure & private</span>
                     <span className="trust-item"><span className="trust-icon">⚡</span>Start in 60 seconds</span>
                   </div>
                 </div>
