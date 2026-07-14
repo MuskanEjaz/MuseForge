@@ -106,7 +106,10 @@ const WATSONX_API_KEY = String(process.env.WATSONX_API_KEY || process.env.IBM_CL
 const WATSONX_PROJECT_ID = String(process.env.WATSONX_PROJECT_ID || '').trim();
 const WATSONX_SPACE_ID = String(process.env.WATSONX_SPACE_ID || '').trim();
 const WATSONX_URL = String(process.env.WATSONX_URL || 'https://us-south.ml.cloud.ibm.com').trim();
-const WATSONX_MODEL = String(process.env.WATSONX_MODEL || 'ibm/granite-3-3-8b-instruct').trim();
+const WATSONX_MODEL = String(
+  process.env.WATSONX_MODEL ||
+  'ibm/granite-3-8b-instruct'
+).trim();
 const WATSONX_API_VERSION = String(process.env.WATSONX_API_VERSION || '2024-05-31').trim();
 const WATSONX_STRICT = String(process.env.WATSONX_STRICT || 'false').toLowerCase().trim();
 
@@ -3449,39 +3452,118 @@ function normalizeCvTextForParsing(text = '') {
 // so the upload path can never break because Docling is down.
 // ---------------------------------------------------------------------------
 async function extractCvTextWithDocling(buffer) {
-  if (!DOCLING_URL) return '';
+  if (!DOCLING_URL || !buffer || !buffer.length) {
+    return '';
+  }
+
+  const controller = new AbortController();
+
+  const timeout = setTimeout(
+    () => controller.abort(),
+    DOCLING_TIMEOUT_MS
+  );
+
   try {
     const form = new FormData();
-    form.append('files', new Blob([buffer], { type: 'application/pdf' }), 'cv.pdf');
+
+    form.append(
+      'files',
+      new Blob(
+        [buffer],
+        { type: 'application/pdf' }
+      ),
+      'cv.pdf'
+    );
+
+    form.append('from_formats', 'pdf');
     form.append('to_formats', 'md');
-    form.append('do_ocr', DOCLING_OCR === 'true' ? 'true' : 'false');
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), DOCLING_TIMEOUT_MS);
-    const response = await fetch(`${DOCLING_URL.replace(/\/+$/, '')}/v1alpha/convert/file`, {
-      method: 'POST',
-      body: form,
-      signal: controller.signal,
-      headers: DOCLING_API_KEY ? { Authorization: `Bearer ${DOCLING_API_KEY}` } : {},
-    });
-    clearTimeout(timeout);
+    form.append(
+      'do_ocr',
+      DOCLING_OCR === 'true'
+        ? 'true'
+        : 'false'
+    );
 
-    if (!response.ok) throw new Error(`Docling responded with ${response.status}`);
-    const data = await response.json().catch(() => ({}));
+    const baseUrl = DOCLING_URL.replace(/\/+$/, '');
 
-    // docling-serve has shifted response shapes between versions, so accept the known ones.
+    const response = await fetch(
+      `${baseUrl}/v1/convert/file`,
+      {
+        method: 'POST',
+        body: form,
+        signal: controller.signal,
+        headers: DOCLING_API_KEY
+          ? {
+              Authorization:
+                `Bearer ${DOCLING_API_KEY}`,
+            }
+          : {},
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response
+        .text()
+        .catch(() => '');
+
+      throw new Error(
+        `Docling responded with ${response.status}` +
+        (
+          errorText
+            ? `: ${errorText.slice(0, 300)}`
+            : ''
+        )
+      );
+    }
+
+    const data = await response
+      .json()
+      .catch(() => ({}));
+
+    if (
+      data?.status &&
+      ![
+        'success',
+        'partial_success',
+      ].includes(data.status)
+    ) {
+      throw new Error(
+        `Docling conversion status: ${data.status}`
+      );
+    }
+
     const markdown = String(
-      data?.document?.md_content
-      || data?.document?.markdown
-      || data?.md_content
-      || (Array.isArray(data?.documents) ? (data.documents[0]?.md_content || '') : '')
-      || ''
+      data?.document?.md_content ||
+      data?.document?.markdown ||
+      data?.md_content ||
+      (
+        Array.isArray(data?.documents)
+          ? (
+              data.documents[0]?.md_content ||
+              data.documents[0]?.markdown ||
+              ''
+            )
+          : ''
+      ) ||
+      ''
     ).trim();
-    if (!markdown) throw new Error('Docling returned no markdown content');
 
-    console.log('CV extraction: Docling succeeded', JSON.stringify({ chars: markdown.length }));
-    // Strip markdown decoration but keep the heading text on its own line, which is precisely
-    // what the section parser keys on.
+    if (!markdown) {
+      throw new Error(
+        'Docling returned no Markdown content. ' +
+        `Response keys: ${Object.keys(data).join(', ')}`
+      );
+    }
+
+    console.log(
+      'CV extraction: Docling succeeded',
+      JSON.stringify({
+        chars: markdown.length,
+        status: data?.status || 'success',
+      })
+    );
+
     return normalizeCvTextForParsing(
       markdown
         .replace(/^#{1,6}\s*/gm, '')
@@ -3490,11 +3572,21 @@ async function extractCvTextWithDocling(buffer) {
         .replace(/\|/g, ' ')
     );
   } catch (error) {
-    console.warn('Docling extraction unavailable; falling back to local PDF parsing:', error.message);
+    const reason =
+      error?.name === 'AbortError'
+        ? `request timed out after ${DOCLING_TIMEOUT_MS}ms`
+        : error.message;
+
+    console.warn(
+      'Docling extraction unavailable; ' +
+      `falling back to local PDF parsing: ${reason}`
+    );
+
     return '';
+  } finally {
+    clearTimeout(timeout);
   }
 }
-
 async function extractCvTextFromPdfBuffer(buffer) {
   if (!buffer || !buffer.length) return '';
 

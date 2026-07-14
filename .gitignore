@@ -17,3 +17,5 @@ clean-*.js
 fix-*.js
 hard-final-*.js
 final-*.js
+
+backend/test-files/
