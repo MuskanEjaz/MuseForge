@@ -10,13 +10,15 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/IBM-Bob-052FAD?style=flat-square&logo=ibm&logoColor=white" alt="IBM Bob" />
-  <img src="https://img.shields.io/badge/IBM-Granite%20on%20watsonx.ai-052FAD?style=flat-square&logo=ibm&logoColor=white" alt="IBM Granite on watsonx.ai" />
-  <img src="https://img.shields.io/badge/IBM-Docling-052FAD?style=flat-square&logo=ibm&logoColor=white" alt="IBM Docling" />
-  <img src="https://img.shields.io/badge/IBM%20Cloud-Object%20Storage-052FAD?style=flat-square&logo=ibm&logoColor=white" alt="IBM Cloud Object Storage" />
-  <img src="https://img.shields.io/badge/IBM%20Cloud-IAM-052FAD?style=flat-square&logo=ibm&logoColor=white" alt="IBM Cloud IAM" />
-  <img src="https://img.shields.io/badge/LangChain-%40langchain%2Fibm-1c3c3c?style=flat-square" alt="LangChain @langchain/ibm" />
+  <a href="docs/IBM_BOB_EVIDENCE.md"><img src="https://img.shields.io/badge/IBM-Bob-052FAD?style=flat-square&logo=ibm&logoColor=white" alt="IBM Bob" /></a>
+  <a href="#1-the-ibm-stack-proves-itself"><img src="https://img.shields.io/badge/IBM-Granite%20on%20watsonx.ai-052FAD?style=flat-square&logo=ibm&logoColor=white" alt="IBM Granite on watsonx.ai" /></a>
+  <a href="#3-docling-verified-on-a-real-cv"><img src="https://img.shields.io/badge/IBM-Docling-052FAD?style=flat-square&logo=ibm&logoColor=white" alt="IBM Docling" /></a>
+  <a href="#2-ibm-cloud-object-storage-verified-end-to-end"><img src="https://img.shields.io/badge/IBM%20Cloud-Object%20Storage-052FAD?style=flat-square&logo=ibm&logoColor=white" alt="IBM Cloud Object Storage" /></a>
+  <a href="#the-ibm-stack-and-what-each-piece-actually-does"><img src="https://img.shields.io/badge/IBM%20Cloud-IAM-052FAD?style=flat-square&logo=ibm&logoColor=white" alt="IBM Cloud IAM" /></a>
+  <a href="backend/verify-langchain.js"><img src="https://img.shields.io/badge/LangChain-%40langchain%2Fibm-1c3c3c?style=flat-square" alt="LangChain @langchain/ibm" /></a>
 </p>
+
+<p align="center"><sub><i>Every badge links to the proof in this repository, not to a vendor page.</i></sub></p>
 
 **MuseForge** turns what a creator has *actually made* — raw notes, project descriptions, CVs, images, audio, video — into a polished, shareable, multilingual portfolio, and refuses to invent a single credit they didn't earn.
 
@@ -104,7 +106,17 @@ Additional guards run on the translation path: `translationLooksFabricated` reje
 
 On any rejection MuseForge falls back **per item** to the creator's grounded original, still in the selected language. A failure never produces an English hole in a Japanese portfolio, and never produces a fabricated sentence.
 
-**FactLock review panel.** For each project the creator sees the original description, the AI-enhanced description, the preserved user-provided facts, any unsupported new facts detected, and three buttons: **Accept**, **Keep Original**, **Manual Edit**. Nothing is published until the creator approves it.
+**FactLock review panel.** For each item the creator sees the original description, the AI-enhanced description, the preserved user-provided facts, any unsupported new facts detected, and four choices: **Accept enhanced**, **Keep edited changes**, **Keep original**, **Regenerate**. Nothing is published until the creator approves every item — the final portfolio is generated only after all FactLock choices are locked.
+
+<p align="center">
+  <img src="docs/readme-assets/factlock-review-en-es.png" alt="FactLock review panel: an English CV bio enhanced into Spanish, with preserved facts listed and no unsupported facts introduced" width="900" />
+  <br /><sub><i>A CV written in English, published in Spanish. The original and the enhancement sit side by side, the preserved facts are listed, and the creator decides.</i></sub>
+</p>
+
+<p align="center">
+  <img src="docs/readme-assets/factlock-review-pending.png" alt="FactLock review panel with items still pending the creator's decision" width="900" />
+  <br /><sub><i>Every item starts as <b>Pending</b>. The portfolio cannot be generated until each one has been accepted, edited or reverted.</i></sub>
+</p>
 
 **The AI proposes. The human ships.**
 
@@ -328,7 +340,17 @@ auth mode    : iam
 === VERDICT: IBM COS is WORKING (auth + bucket + read/write round-trip). ===
 ```
 
-The COS instance, bucket and `museforge-app-cos` service credential are provisioned in IBM Cloud under the MuseForge account. The application data layer currently runs on Supabase with a local JSON fallback; migrating users, public portfolios and history onto the verified COS layer is the documented next step, and the storage module and its tests are already in the repo.
+The COS instance, bucket and `museforge-app-cos` service credential are provisioned in IBM Cloud under the MuseForge account:
+
+<p align="center">
+  <img src="docs/readme-assets/cos-ibm-cloud-1.webp" alt="IBM Cloud console showing the provisioned Cloud Object Storage instance" width="880" />
+</p>
+
+<p align="center">
+  <img src="docs/readme-assets/cos-ibm-cloud-2.webp" alt="IBM Cloud console showing the museforge-app-cos service credential" width="880" />
+</p>
+
+The application data layer currently runs on Supabase with a local JSON fallback; migrating users, public portfolios and history onto the verified COS layer is the documented next step, and the storage module and its tests are already in the repo.
 
 ### 3. Docling, verified on a real CV
 
