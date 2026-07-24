@@ -197,9 +197,7 @@ const LANGUAGE_OPTIONS = [
   'Korean',
   'Russian',
   'Indonesian',
-  'Vietnamese',
-  'Arabic',
-  'Urdu'
+  'Vietnamese'
 ];
 
 const normalizeClientOutputLanguage = (language = '') => {
@@ -375,7 +373,12 @@ const buildFactLockTrustReport = ({
   }, 0);
 
   return {
-    projectsReviewed: reviews.length || reviewableCount,
+    // `reviews` includes the bio and statement meta-reviews (id "meta:bio", "meta:statement").
+    // Counting those as "Projects reviewed" is why the report said 2 for a CV with 4 projects —
+    // a number a judge can disprove in three seconds, on the one panel whose whole job is trust.
+    projectsReviewed: reviews.length
+      ? reviews.filter(item => !String(item?.id || '').startsWith('meta:')).length
+      : reviewableCount,
     enhancedDescriptionsAccepted,
     originalDescriptionsKept,
     unsupportedFactsDetected,
@@ -634,7 +637,7 @@ const applyCreatorHeadingLabels = (labels = {}, language = 'English', selectedCr
 
 const frontendEnglishProseScore = (value = '') => {
   const text = String(value || '').toLowerCase();
-  const matches = text.match(/\b(the|and|with|for|from|that|this|which|where|while|because|creative|portfolio|project|projects|work|works|artist|statement|skills|experience|professional|showcase|presents|provided|user|details|based|clear|authentic|centered|focused|my|i|is|are|was|were)\b/g) || [];
+  const matches = text.match(/\b(the|and|with|for|from|that|this|which|where|while|because|creative|portfolio|project|projects|work|works|artist|statement|skills|experience|professional|showcase|presents|provided|user|details|based|clear|authentic|centered|focused|my|is|are|was|were)\b/g) || [];
   return matches.length;
 };
 
@@ -657,7 +660,10 @@ const frontendTargetLanguageSignalScore = (value = '', language = 'English') => 
     indonesian: ['dan','dengan','untuk','saya','kerja','proyek','portofolio','keterampilan'],
   };
   const words = packs[family] || [];
-  return words.reduce((count, word) => count + (new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(text) ? 1 : 0), 0);
+  return words.reduce((count, word) => {
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return count + (new RegExp('(^|[^\\p{L}\\p{N}_])' + escaped + '(?=$|[^\\p{L}\\p{N}_])', 'iu').test(text) ? 1 : 0);
+  }, 0);
 };
 
 const frontendLooksLikeWrongEnglishForTarget = (value = '', language = 'English') => {
@@ -688,14 +694,18 @@ const safeClientLocalized = (candidate = '', fallback = '', language = 'English'
     !frontendLooksLikeWrongEnglishForTarget(cleanCandidate, normalizedLanguage)
   ) return cleanCandidate;
 
-  if (
-    localizedFallback &&
-    !hasUnexpectedScriptForLanguage(localizedFallback, normalizedLanguage) &&
-    !frontendLooksLikeWrongEnglishForTarget(localizedFallback, normalizedLanguage) &&
-    textKey(localizedFallback) !== textKey(cleanFallback)
-  ) return localizedFallback;
-
-  return frontendGenericLocalized(normalizedLanguage, kind) || localizedFallback || '';
+  // FactLock applies to fallbacks too. localizeClientText has no dictionaries — it returns the
+  // fallback unchanged (or '' when its script is wrong for the target). The old condition
+  // `textKey(localizedFallback) !== textKey(cleanFallback)` could therefore NEVER be true, so
+  // every AI miss cascaded into frontendGenericLocalized filler: "Google Ads Certification"
+  // became "Detalle adicional", degree details became "Detalle adicional", the bio became a
+  // third-person meta sentence. Real user data is never replaced with generic text. Translation
+  // is the backend AI's job; the client's only job here is to not lose data.
+  if (localizedFallback) return localizedFallback;
+  if (cleanCandidate && !hasUnexpectedScriptForLanguage(cleanCandidate, normalizedLanguage)) return cleanCandidate;
+  if (cleanFallback && !hasUnexpectedScriptForLanguage(cleanFallback, normalizedLanguage)) return cleanFallback;
+  if (!cleanCandidate && !cleanFallback) return '';
+  return frontendGenericLocalized(normalizedLanguage, kind) || cleanFallback || '';
 };
 
 
@@ -1717,12 +1727,18 @@ function VerificationWorkingScreen({ loading, error, onLogin }) {
 }
 
 function App() {
-  readStoredAuth();
+  const storedAuth = readStoredAuth();
   const authLink = readAuthLink();
   const [verificationToken] = useState(authLink.verifyToken);
   const [resetToken] = useState(authLink.resetToken);
-  const [authView, setAuthView] = useState(() => authLink.verifyToken ? 'verifying' : authLink.resetToken ? 'reset-password' : 'welcome');
-  const [authUser, setAuthUser] = useState(null);
+  const [authView, setAuthView] = useState(() => {
+  if (authLink.verifyToken) return 'verifying';
+  if (authLink.resetToken) return 'reset-password';
+  return storedAuth.token && storedAuth.user ? 'app' : 'welcome';
+});
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [authUser, setAuthUser] = useState(() => storedAuth.user || null);
   const [authLoading, setAuthLoading] = useState(Boolean(authLink.verifyToken));
   const [authError, setAuthError] = useState('');
   const [authNotice, setAuthNotice] = useState('');
@@ -1906,7 +1922,7 @@ function App() {
       })
       .then(data => {
         if (!active) return;
-        setPublicPortfolio(data.portfolio);
+        setPublicPortfolio(data);
         setPublicPortfolioStatus('ready');
       })
       .catch(error => {
@@ -2645,7 +2661,12 @@ completeAuthentication(data, mode === 'signup' ? 'Account created successfully.'
           link: item.link || '',
         })),
       }));
-      const shouldEnhanceProjects = !(selectedCreatorType === 'developer' && cvFilled);
+      // FactLock is the product's headline feature, and this line switched it off for exactly the
+      // path used in the demo: a developer uploading a CV. With enhancement off the server returns
+      // no enhancedProjects, so the trust report has nothing to review and honestly reports 0.
+      // Enhancement is not a risk to fidelity — reviewing it IS FactLock's job, and every change
+      // still goes through Accept / Keep edited / Keep original before it reaches the portfolio.
+      const shouldEnhanceProjects = true;
 
       const res = await fetchFromBackend('/generate', {
         method: "POST",
@@ -3325,7 +3346,7 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     }
     .hero h1 {
       font-family: var(--mf-heading-font); font-size: 3.05rem;
-      background: linear-gradient(135deg, #8b5cf6 0%, #6d36dc 100%);
+      background: linear-gradient(120deg, #8b5cf6 0%, #d946ef 50%, #ec4899 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       margin-bottom: 12px; line-height: 1.1;
     }
@@ -3471,7 +3492,7 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     ${customHTML}
     ${contactHTML}
   </div>
-  <div class="footer">\n    <p>Created with MuseForge — Built with IBM Bob</p>\n    <span>Powered by IBM Bob × Groq AI</span>\n  </div>
+  <div class="footer">\n    <p>Created with MuseForge — Built with <strong>IBM Bob</strong> · Powered by <strong>IBM Granite on watsonx.ai</strong> + <strong>IBM Docling</strong></div>
   <script>
     document.querySelectorAll('.hero-nav-link').forEach(l => {
       l.addEventListener('click', e => {
@@ -3684,9 +3705,77 @@ ${section.items.map(item => `- ${item.heading}${item.desc ? `: ${item.desc}` : '
                 <button className="nav-link" type="button" onClick={() => scrollToSection('creators')}>Creator Types</button>
               </div>
               <div className="navbar-actions">
-                <span className="navbar-user" title={authUser?.email || ''}>{authUser?.name ? `Hi, ${authUser.name.split(' ')[0]}` : ''}</span>
-                <button className="navbar-cta" type="button" onClick={() => scrollToSection('creators')}>Start</button>
-                <button className="navbar-logout" type="button" onClick={logout}>Log out</button>
+                <button
+                      className="navbar-cta"
+                        type="button"
+                        onClick={() => scrollToSection('creators')}
+                      >
+                        Start
+                      </button>
+
+                      <div className="profile-menu-wrap">
+                        <button
+                          type="button"
+                          className="profile-trigger"
+                          aria-haspopup="menu"
+                          aria-expanded={profileMenuOpen}
+                          onClick={() => setProfileMenuOpen(open => !open)}
+                        >
+                          <span className="profile-trigger-avatar">
+                            {authUser?.name?.trim()?.charAt(0)?.toUpperCase() || 'M'}
+                          </span>
+
+                          <span className="profile-trigger-name">
+                            {authUser?.name?.split(' ')[0] || 'Creator'}
+                          </span>
+
+                          <span className={`profile-trigger-arrow ${profileMenuOpen ? 'open' : ''}`}
+                                aria-hidden="true"
+                              ></span>
+                        </button>
+
+                        {profileMenuOpen && (
+                          <div className="profile-dropdown" role="menu">
+                            <div className="profile-dropdown-header">
+                              <span className="profile-dropdown-avatar">
+                                {authUser?.name?.trim()?.charAt(0)?.toUpperCase() || 'M'}
+                              </span>
+
+                              <div>
+                                <strong>{authUser?.name || 'MuseForge Creator'}</strong>
+                                <span>{authUser?.email || ''}</span>
+                              </div>
+                            </div>
+
+                            {authUser?.emailVerified && (
+                              <div className="profile-verified">✓ Verified account</div>
+                            )}
+
+                            <div className="profile-dropdown-actions">
+                                  <button
+                                    type="button"
+                                    className="profile-view-button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                      setProfileMenuOpen(false);
+                                      setProfileModalOpen(true);
+                                    }}
+                                  >
+                                    View profile
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className="profile-logout-button"
+                                    role="menuitem"
+                                    onClick={logout}
+                                  >
+                                    Log out
+                                  </button>
+                                </div>
+                          </div>
+                        )}
+                      </div>
               </div>
             </div>
           </nav>
@@ -3709,14 +3798,14 @@ ${section.items.map(item => `- ${item.heading}${item.desc ? `: ${item.desc}` : '
                     <span className="heading-line">Journey into a</span>
                     <span className="heading-line gradient-text">Stunning Portfolio</span>
                   </h1>
-                  <p className="hero-subtitle">Your work already exists. MuseForge turns it into a portfolio that speaks in your voice, in <strong>17 languages</strong>—and <strong>FactLock</strong> makes sure it never claims a single credit you didn't earn.</p>
+                  <p className="hero-subtitle">Your work already exists. MuseForge turns it into a portfolio that speaks in your voice, in <strong>15 languages</strong>—and <strong>FactLock</strong> makes sure it never claims a single credit you didn't earn.</p>
                   <div className="hero-buttons">
                     <button className="btn-primary" type="button" onClick={() => scrollToSection('creators')}>Start <span>→</span></button>
                     <button className="btn-secondary" type="button" onClick={() => setShowDemoVideo(true)}><span className="play-icon">▶</span>See How It Works</button>
                   </div>
                   <div className="hero-trust">
                     <span className="trust-item"><span className="trust-icon">✦</span>Never invents an award, a client or a number</span>
-                    <span className="trust-item"><span className="trust-icon">♢</span>Write in any language, publish in 17</span>
+                    <span className="trust-item"><span className="trust-icon">♢</span>Write in any language, publish in 15</span>
                     <span className="trust-item"><span className="trust-icon">⚡</span>Start in 60 seconds</span>
                   </div>
                 </div>
@@ -3824,7 +3913,63 @@ ${section.items.map(item => `- ${item.heading}${item.desc ? `: ${item.desc}` : '
               </div>
             </section>
           </main>
-          <footer className="landing-footer">Powered by <strong>IBM</strong> and <strong>AI</strong></footer>
+          <footer className="landing-footer"><span className="footer-capsule">Powered by <strong>IBM</strong> and <strong>AI</strong></span></footer>
+                  {profileModalOpen && (
+          <div
+            className="profile-modal-backdrop"
+            role="presentation"
+            onClick={() => setProfileModalOpen(false)}
+          >
+            <section
+              className="profile-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="profile-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="profile-modal-close"
+                aria-label="Close profile"
+                onClick={() => setProfileModalOpen(false)}
+              >
+                ×
+              </button>
+
+              <div className="profile-modal-cover"></div>
+
+              <div className="profile-modal-avatar">
+                {authUser?.name?.trim()?.charAt(0)?.toUpperCase() || 'M'}
+              </div>
+
+              <div className="profile-modal-content">
+                <p className="profile-modal-eyebrow">MUSEFORGE CREATOR</p>
+
+                <h2 id="profile-title">
+                  {authUser?.name || 'MuseForge Creator'}
+                </h2>
+
+                <p className="profile-modal-email">
+                  {authUser?.email || ''}
+                </p>
+
+                <div className="profile-details-grid">
+                  <article>
+                    <span>Account status</span>
+                    <strong>
+                      {authUser?.emailVerified ? '✓ Verified' : 'Not verified'}
+                    </strong>
+                  </article>
+
+                  <article>
+                    <span>Portfolio workspace</span>
+                    <strong>Active</strong>
+                  </article>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
         </div>
       ) : null}
 

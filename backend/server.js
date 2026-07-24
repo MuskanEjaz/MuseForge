@@ -1,4 +1,5 @@
 const express = require('express');
+const { assessCvReadability, UNREADABLE_CV_MESSAGE } = require('./cv-readability');
 const cors = require('cors');
 const multer = require('multer');
 const { PdfReader } = require('pdfreader');
@@ -106,10 +107,7 @@ const WATSONX_API_KEY = String(process.env.WATSONX_API_KEY || process.env.IBM_CL
 const WATSONX_PROJECT_ID = String(process.env.WATSONX_PROJECT_ID || '').trim();
 const WATSONX_SPACE_ID = String(process.env.WATSONX_SPACE_ID || '').trim();
 const WATSONX_URL = String(process.env.WATSONX_URL || 'https://us-south.ml.cloud.ibm.com').trim();
-const WATSONX_MODEL = String(
-  process.env.WATSONX_MODEL ||
-  'ibm/granite-3-8b-instruct'
-).trim();
+const WATSONX_MODEL = String(process.env.WATSONX_MODEL || 'ibm/granite-3-3-8b-instruct').trim();
 const WATSONX_API_VERSION = String(process.env.WATSONX_API_VERSION || '2024-05-31').trim();
 const WATSONX_STRICT = String(process.env.WATSONX_STRICT || 'false').toLowerCase().trim();
 
@@ -117,7 +115,7 @@ const WATSONX_STRICT = String(process.env.WATSONX_STRICT || 'false').toLowerCase
 const DOCLING_URL = String(process.env.DOCLING_URL || '').trim();
 const DOCLING_API_KEY = String(process.env.DOCLING_API_KEY || '').trim();
 const DOCLING_OCR = String(process.env.DOCLING_OCR || 'false').toLowerCase().trim();
-const DOCLING_TIMEOUT_MS = Number(process.env.DOCLING_TIMEOUT_MS || 20000);
+const DOCLING_TIMEOUT_MS = Number(process.env.DOCLING_TIMEOUT_MS || 180000);
 const watsonxConfigured = Boolean(WATSONX_API_KEY && (WATSONX_PROJECT_ID || WATSONX_SPACE_ID));
 const OPENAI_MODEL = String(process.env.OPENAI_MODEL || 'gpt-4o-mini').trim();
 const GEMINI_MODEL = String(process.env.GEMINI_MODEL || 'gemini-1.5-flash').trim();
@@ -149,6 +147,7 @@ function aiAvailable() {
 
 function selectAiProvider() {
   // IBM watsonx (Granite) is the primary model for this project; the others remain as fallbacks.
+  if (AI_PROVIDER === 'langchain' && watsonxConfigured && !providerDisabled('langchain')) return 'langchain';
   if (AI_PROVIDER === 'watsonx' && watsonxConfigured && !providerDisabled('watsonx')) return 'watsonx';
   if (AI_PROVIDER === 'granite' && watsonxConfigured && !providerDisabled('watsonx')) return 'watsonx';
   if (AI_PROVIDER === 'groq' && groq && !providerDisabled('groq')) return 'groq';
@@ -196,8 +195,10 @@ async function callWatsonxText({ messages = [], temperature = 0.15, maxTokens = 
 
   const body = {
     model_id: WATSONX_MODEL,
+    // Pass 'assistant' through instead of collapsing it into 'user'. Nothing sends assistant turns
+    // today, but silently rewriting them would corrupt any multi-turn conversation added later.
     messages: messages.map(message => ({
-      role: message.role === 'system' ? 'system' : 'user',
+      role: ['system', 'assistant', 'user'].includes(message.role) ? message.role : 'user',
       content: String(message.content || ''),
     })),
     max_tokens: maxTokens,
@@ -231,10 +232,69 @@ async function callWatsonxText({ messages = [], temperature = 0.15, maxTokens = 
   return text;
 }
 
+// ---------------------------------------------------------------------------
+// LangChain -> ChatWatsonx -> IBM Granite.
+// This is the same path verify-langchain.js proves, but wired into the real pipeline, so the
+// claim "LangChain orchestrates IBM Granite" is true of the running product and not just a demo
+// script. @langchain/ibm ships as ESM, so it is loaded with a dynamic import() and cached.
+// If LangChain is missing or errors, the provider chain falls through to the direct watsonx call —
+// which still reaches Granite, so the app never degrades below IBM.
+// ---------------------------------------------------------------------------
+let _chatWatsonxCache;
+async function loadChatWatsonx() {
+  if (_chatWatsonxCache !== undefined) return _chatWatsonxCache;
+  try {
+    const mod = await import('@langchain/ibm');
+    _chatWatsonxCache = mod.ChatWatsonx || (mod.default && mod.default.ChatWatsonx) || null;
+    if (_chatWatsonxCache) console.log('LangChain: @langchain/ibm loaded (ChatWatsonx).');
+  } catch (error) {
+    console.warn('LangChain (@langchain/ibm) unavailable; using the direct watsonx call:', error.message);
+    _chatWatsonxCache = null;
+  }
+  return _chatWatsonxCache;
+}
+
+let _langchainModelCache = null;
+async function callLangchainWatsonxText({ messages = [], temperature = 0.15, maxTokens = 1000 } = {}) {
+  const ChatWatsonx = await loadChatWatsonx();
+  if (!ChatWatsonx) throw new Error('@langchain/ibm is not installed');
+  if (!watsonxConfigured) throw new Error('watsonx is not configured');
+
+  // maxTokens/temperature change per call, so build per call but reuse the class.
+  const model = new ChatWatsonx({
+    model: WATSONX_MODEL,
+    version: WATSONX_API_VERSION,
+    serviceUrl: WATSONX_URL,
+    projectId: WATSONX_PROJECT_ID || undefined,
+    spaceId: WATSONX_SPACE_ID || undefined,
+    watsonxAIApikey: WATSONX_API_KEY,
+    watsonxAIAuthType: 'iam',
+    maxTokens,
+    temperature: Math.max(0.05, Number(temperature) || 0.05),
+  });
+  _langchainModelCache = model;
+
+  // LangChain's message tuple format: ['system' | 'human' | 'ai', content]
+  const lcMessages = messages.map(message => [
+    message.role === 'system' ? 'system' : (message.role === 'assistant' ? 'ai' : 'human'),
+    String(message.content || ''),
+  ]);
+
+  const response = await model.invoke(lcMessages);
+  const raw = response && response.content;
+  const text = Array.isArray(raw)
+    ? raw.map(part => (typeof part === 'string' ? part : (part && part.text) || '')).join('').trim()
+    : String(raw || '').trim();
+
+  if (!text) throw new Error('LangChain/watsonx returned an empty response');
+  return text;
+}
+
 function orderedAiProviders() {
   const providers = [];
   const add = (name) => {
     if (!name || providers.includes(name) || providerDisabled(name)) return;
+    if (name === 'langchain' && !watsonxConfigured) return;
     if (name === 'watsonx' && !watsonxConfigured) return;
     if (name === 'groq' && !groq) return;
     if (name === 'openai' && !openai) return;
@@ -243,6 +303,14 @@ function orderedAiProviders() {
   };
 
   // If a provider is explicitly selected, do NOT spam quota-exhausted fallback providers.
+  if (AI_PROVIDER === 'langchain') {
+    // LangChain -> Granite first; if LangChain itself breaks, the direct Granite call still runs,
+    // so the model stays IBM either way.
+    add('langchain');
+    add('watsonx');
+    if (WATSONX_STRICT !== 'true') { add('groq'); add('openai'); add('gemini'); }
+    return providers;
+  }
   if (AI_PROVIDER === 'watsonx' || AI_PROVIDER === 'granite') {
     add('watsonx');
     // Keep the demo alive if watsonx is briefly unavailable, but only as a backup.
@@ -254,6 +322,7 @@ function orderedAiProviders() {
   if (AI_PROVIDER === 'gemini') { add('gemini'); return providers; }
 
   // Auto mode: IBM Granite on watsonx.ai is the primary model for this project.
+  add('langchain');
   add('watsonx');
   add('groq');
   add('openai');
@@ -324,19 +393,100 @@ async function callGroqText({ messages = [], temperature = 0.15, maxTokens = 100
 async function generateAiText({ messages = [], temperature = 0.15, maxTokens = 1000 } = {}) {
   const providers = orderedAiProviders();
   let lastError = null;
+  const isTransient = (err) =>
+    /ECONNRESET|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|socket hang up|network|fetch failed|timeout/i
+      .test(String((err && err.message) || err || ''));
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  const callProvider = (provider) => {
+    if (provider === 'langchain') return callLangchainWatsonxText({ messages, temperature, maxTokens });
+    if (provider === 'watsonx') return callWatsonxText({ messages, temperature, maxTokens });
+    if (provider === 'gemini') return callGeminiText({ messages, temperature, maxTokens });
+    if (provider === 'openai') return callOpenAIText({ messages, temperature, maxTokens });
+    if (provider === 'groq') return callGroqText({ messages, temperature, maxTokens });
+    return Promise.reject(new Error('unknown provider ' + provider));
+  };
+
   for (const provider of providers) {
-    try {
-      if (provider === 'watsonx') return await callWatsonxText({ messages, temperature, maxTokens });
-      if (provider === 'gemini') return await callGeminiText({ messages, temperature, maxTokens });
-      if (provider === 'openai') return await callOpenAIText({ messages, temperature, maxTokens });
-      if (provider === 'groq') return await callGroqText({ messages, temperature, maxTokens });
-    } catch (error) {
-      lastError = error;
-      markProviderDisabled(provider, error);
-      console.warn(`${provider} AI request failed; trying fallback provider if available:`, error.message);
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        return await callProvider(provider);
+      } catch (error) {
+        lastError = error;
+        if (isTransient(error) && attempt < 3) {
+          console.warn(`${provider} transient error (attempt ${attempt}/3): ${error.message} — retrying`);
+          await sleep(400 * attempt);
+          continue;
+        }
+        if (!isTransient(error)) markProviderDisabled(provider, error);
+        console.warn(`${provider} AI request failed; trying fallback provider if available:`, error.message);
+        break;
+      }
     }
   }
   throw lastError || new Error('No AI provider configured');
+}
+
+function translationLooksFabricated(source = '', candidate = '') {
+  const src = cleanText(source);
+  const out = cleanText(candidate);
+  if (!src || !out) return false;
+  if (/\{\s*"|"\s*:\s*"|\[JSON\]|\[Instructor|\[Your |\]\s*\[/i.test(out)) return true;
+  if (out.length > src.length * 2.5 + 80) return true;
+  return false;
+}
+
+// Skills were never translated at all — there was no pass for them. One AI call per skill would
+// mean 40+ calls on a real CV, so the whole list goes in a single JSON round-trip. Technology
+// names (Java, Docker, MERN Stack, AWS) must survive untouched; only generic phrases like
+// "Database Systems" or "Team Collaboration" are translated. Any parse failure, length mismatch,
+// wrong script or suspected fabrication falls back to the original skill, per item.
+async function translateSkillListStrict(skills = [], targetLanguage = 'English') {
+  const list = (Array.isArray(skills) ? skills : []).map(cleanText).filter(Boolean);
+  if (!list.length || languageFamily(targetLanguage) === 'english') return list;
+  try {
+    const raw = await generateAiText({
+      temperature: 0.0,
+      maxTokens: 1200,
+      messages: [
+        { role: 'system', content: `You translate skill labels into ${targetLanguage}. ${languageStrictInstruction(targetLanguage)} RULES: (1) Translate generic skill phrases, for example "Database Systems", "Team Collaboration", "Version Control", "Frontend Development". (2) NEVER translate the name of a programming language, library, framework, product or company — for example Java, Python, C++, React, Node.js, Docker, Kubernetes, AWS, Git, GitHub, MongoDB, Grafana, MERN Stack. Return those exactly as given. (3) Return ONLY a JSON array of strings with the SAME length and SAME order as the input. No prose, no markdown, no code fences.` },
+        { role: 'user', content: JSON.stringify(list) },
+      ],
+    });
+    const text = cleanText(raw).replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed) && parsed.length === list.length) {
+      return list.map((original, index) => {
+        const candidate = cleanText(parsed[index]);
+        if (!candidate) return original;
+        if (hasUnexpectedScriptForLanguage(candidate, targetLanguage)) return original;
+        if (translationLooksFabricated(original, candidate)) return original;
+        return candidate;
+      });
+    }
+  } catch (error) {
+    console.warn('Skill translation failed; original skills kept:', error.message);
+  }
+  return list;
+}
+
+// Weaker models append their own JSON scaffolding after the prose ({"statement":"..."}) and
+// repeat the whole answer verbatim a second time. Both are visible in the finished portfolio and
+// neither is caught by the script or language checks, because the leaked text is perfectly good
+// Spanish. Cut at the JSON, and cut at the point where the opening sentence starts over.
+function stripLeakedJsonAndEcho(value = '') {
+  let text = cleanText(value);
+  if (!text) return text;
+  const jsonAt = text.search(/\{\s*"[a-z_]+"\s*:/i);
+  if (jsonAt > 40) text = cleanText(text.slice(0, jsonAt));
+  text = text.replace(/^\{\s*"[a-z_]+"\s*:\s*"/i, '').replace(/"\s*\}\s*$/, '');
+  const half = Math.floor(text.length / 2);
+  const firstChunk = text.slice(0, Math.min(120, half));
+  if (firstChunk.length > 60) {
+    const repeatAt = text.indexOf(firstChunk, Math.max(60, half - 40));
+    if (repeatAt > 60) text = cleanText(text.slice(0, repeatAt));
+  }
+  return text;
 }
 
 async function translateTextStrict(text = '', targetLanguage = 'English') {
@@ -360,7 +510,17 @@ async function translateTextStrict(text = '', targetLanguage = 'English') {
       ],
     });
     const translated = cleanText(aiText).replace(/^\"|\"$/g, '');
-    if (translated && !hasUnexpectedScriptForLanguage(translated, lang) && (!sameCleanText(translated, clean) || family === 'english')) return translated;
+    if (translated && !hasUnexpectedScriptForLanguage(translated, lang) && !looksLikeWrongEnglishForTarget(translated, lang) && !translationLooksFabricated(clean, translated)) return translated;
+    const retryText = await generateAiText({
+      temperature: 0.0,
+      maxTokens: 650,
+      messages: [
+        { role: 'system', content: `You are a strict translator. ${languageStrictInstruction(lang)} Your previous answer was NOT written in ${lang}. Translate the user text into ${lang} ONLY — every word of prose. Return only the translated text with no explanations, quotes, markdown, or labels.` },
+        { role: 'user', content: clean },
+      ],
+    });
+    const retried = cleanText(retryText).replace(/^\"|\"$/g, '');
+    if (retried && !hasUnexpectedScriptForLanguage(retried, lang) && !looksLikeWrongEnglishForTarget(retried, lang) && !translationLooksFabricated(clean, retried)) return retried;
   } catch (error) {
     console.warn('Strict translation failed; local fallback used:', error.message);
   }
@@ -1148,14 +1308,12 @@ const ACTIVE_OUTPUT_LANGUAGES = new Set([
   'Korean',
   'Russian',
   'Indonesian',
-  'Vietnamese',
-  'Arabic',
-  'Urdu'
+  'Vietnamese'
 ]);
 // Output is restricted to these 15. Input may be written in ANY language: the pipeline detects the
-// source script and converts it, so a CV typed in Urdu still produces (for example) a Japanese
-// portfolio. Arabic / Urdu / Hindi / Roman Urdu dictionaries are still present below and can be
-// re-enabled by adding the name to this Set — nothing else needs to change.
+// source script and converts it, so a CV typed in Hindi still produces (for example) a Japanese
+// portfolio. Hindi / Roman Urdu dictionaries are still present below and can be re-enabled by
+// adding the name to this Set — nothing else needs to change.
 
 function normalizeOutputLanguageName(value = 'English') {
   const clean = String(value || '').trim();
@@ -1752,14 +1910,13 @@ Write a strong 2 short-paragraph statement. Do not start with the same sentence 
 
 function portfolioBodyForLanguageCheck(portfolio = '') {
   return cleanText(String(portfolio || '')
-    .split(/\n+/)
-    .filter(line => !/^\s*#{1,6}\s+/.test(line))
-    .join(' '));
+    .replace(/#{1,6}\s*(Artist\s+Statement|Professional\s+Statement|Artist\s+Bio|Bio|Statement)(?=$|[^\p{L}])/giu, ' ')
+    .replace(/#{1,6}/g, ' '));
 }
 
 function englishProseScore(value = '') {
   const text = cleanText(value).toLowerCase();
-  const matches = text.match(/\b(the|and|with|for|from|that|this|which|where|while|because|creative|portfolio|project|projects|work|works|artist|statement|skills|experience|professional|showcase|presents|provided|user|details|based|clear|authentic|centered|focused|my|i|is|are|was|were)\b/g) || [];
+  const matches = text.match(/\b(the|and|with|for|from|that|this|which|where|while|because|creative|portfolio|project|projects|work|works|artist|statement|skills|experience|professional|showcase|presents|provided|user|details|based|clear|authentic|centered|focused|my|is|are|was|were)\b/g) || [];
   return matches.length;
 }
 
@@ -1782,7 +1939,7 @@ function targetLanguageSignalScore(value = '', targetLanguage = 'English') {
     indonesian: ['dan','dengan','untuk','saya','kerja','proyek','portofolio','keterampilan'],
   };
   const words = packs[family] || [];
-  return words.reduce((count, word) => count + (new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(text) ? 1 : 0), 0);
+  return words.reduce((count, word) => count + (unicodeWordBoundaryPattern([word]).test(text) ? 1 : 0), 0);
 }
 
 function looksLikeWrongEnglishForTarget(value = '', targetLanguage = 'English') {
@@ -2237,24 +2394,16 @@ function strictLocalizeFallback(value = '', targetLanguage = 'English', kind = '
     return original;
   }
 
-  // English target: if the SOURCE is not English (another script, or Roman Urdu) and we could not
-  // translate it, returning the original verbatim would drop foreign prose straight into an
-  // English portfolio. Fall back to clean English instead — the selected language always wins.
-  if (family === 'english') {
-    const sourceIsForeign = containsArabicScript(original) || containsDevanagari(original)
-      || containsCJK(original) || containsBengali(original) || containsTamil(original)
-      || containsTelugu(original) || containsThai(original) || hasCyrillic(original)
-      || looksRomanUrdu(original);
-    if (!sourceIsForeign) return localized || original;
-    if (localized && !hasUnexpectedScriptForLanguage(localized, 'English')) return localized;
-    return genericLocalizedText('English', kind) || '';
-  }
-  if (!requiresNonLatinScript(targetLanguage) && family !== 'roman urdu') {
-    if (localized && !sameCleanText(localized, original) && !looksLikeWrongEnglishForTarget(localized, targetLanguage)) return localized;
-    return genericLocalizedText(targetLanguage, kind) || '';
-  }
-  if (localized && !sameCleanText(localized, original) && !leaksLatinForTarget(localized, targetLanguage)) return localized;
-  return genericLocalizedText(targetLanguage, kind) || localized || '';
+// FactLock applies to fallbacks too. localizeBasicTextFallback deliberately has no phrase
+  // dictionaries, so `localized` is (by construction) identical to `original` for every
+  // non-English target. The old code demanded that the localized text DIFFER from the original
+  // before accepting it — impossible by construction — so EVERY field the AI did not reach was
+  // replaced by genericLocalizedText() filler ("Detalle adicional", "اضافی تفصیل", ...).
+  // That silently destroyed real user data: certification names, degree details, dates.
+  // A true fact in the wrong language beats a fabricated sentence in the right one.
+  // Real translation is the AI's job (translateTextStrict, with retry); this fallback's only
+  // job is to never lose data. Generic filler is never a substitute for non-empty user text.
+  return localized || original;
 }
 
 function hasUnexpectedScriptForLanguage(value = '', targetLanguage = 'English') {
@@ -2265,7 +2414,7 @@ function hasUnexpectedScriptForLanguage(value = '', targetLanguage = 'English') 
   if (family === 'english') return looksRomanUrdu(text) || containsArabicScript(text) || containsDevanagari(text) || containsCJK(text) || hasCyrillic(text) || containsBengali(text) || containsTamil(text) || containsTelugu(text) || containsThai(text);
   if (family === 'roman urdu') return containsArabicScript(text) || containsDevanagari(text) || containsCJK(text) || hasCyrillic(text) || containsBengali(text) || containsTamil(text) || containsTelugu(text) || containsThai(text);
   if (['spanish','french','german','italian','portuguese','dutch','turkish','malay','indonesian','filipino','swahili','polish','vietnamese'].includes(family)) {
-    return containsArabicScript(text) || containsDevanagari(text) || containsCJK(text) || hasCyrillic(text) || containsBengali(text) || containsTamil(text) || containsTelugu(text) || containsThai(text);
+    return looksRomanUrdu(text) || containsArabicScript(text) || containsDevanagari(text) || containsCJK(text) || hasCyrillic(text) || containsBengali(text) || containsTamil(text) || containsTelugu(text) || containsThai(text);
   }
   if (family === 'russian') return containsArabicScript(text) || containsDevanagari(text) || containsCJK(text);
   if (family === 'greek') return containsArabicScript(text) || containsDevanagari(text) || containsCJK(text) || hasCyrillic(text);
@@ -2611,7 +2760,7 @@ function candidateInventsUnsupportedClaims(original = '', candidate = '', option
   const candidateClean = cleanText(candidate);
   if (!originalClean || !candidateClean) return false;
 
-  // 1) Any number in the output that is not in the source. Script-agnostic: guards all 18 languages.
+  // 1) Any number in the output that is not in the source. Script-agnostic: guards all 15 languages.
   for (const number of numbersFromText(candidateClean)) {
     if (!originalClean.includes(number)) return true;
   }
@@ -2929,6 +3078,126 @@ async function buildLocalizedOutput({
   };
 }
 
+// ===========================================================================
+// PASTE THIS WHOLE BLOCK INTO server.js
+// Put it on the line just ABOVE:   app.post('/generate', aiLimiter, ...
+// (anywhere among your other app.post routes works, but above /generate is easy to find)
+//
+// It adds the missing /suggest-projects route that your App.js "AI Suggestions"
+// button calls. It uses your existing IBM Granite dispatch (generateAiText) and
+// falls back to your built-in suggestions on ANY failure, so the button never dies.
+// It writes in the creator's chosen language and does not invent facts (FactLock-aligned).
+// ===========================================================================
+
+// Safe, read-only IBM status probe (booleans + public config only; never secrets).
+require('./ibm-status').registerIbmStatus(app, {
+  watsonxConfigured,
+  watsonxModel: WATSONX_MODEL,
+  watsonxStrict: WATSONX_STRICT,
+  doclingUrl: DOCLING_URL,
+  doclingProbeTimeoutMs: 2500,
+});
+
+app.post('/portfolio/share', async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (!body.name && !body.portfolio) {
+      return res.status(400).json({ error: 'Nothing to share yet.' });
+    }
+    const id = crypto.randomBytes(9).toString('hex');
+    const items = readPublicPortfolios();
+    items.unshift({ id, createdAt: new Date().toISOString(), data: body });
+    writePublicPortfolios(items.slice(0, 500));
+    return res.json({ publicPath: `/portfolio/${id}`, id });
+  } catch (error) {
+    console.error('portfolio/share failed:', error.message);
+    return res.status(500).json({ error: 'Could not publish this portfolio.' });
+  }
+});
+ 
+app.get('/portfolio/:id', (req, res) => {
+  try {
+    const id = String(req.params.id || '');
+    if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+      return res.status(400).json({ error: 'Invalid portfolio id.' });
+    }
+    const found = readPublicPortfolios().find(item => item && item.id === id);
+    if (!found) return res.status(404).json({ error: 'Portfolio not found.' });
+    return res.json(found.data || {});
+  } catch (error) {
+    console.error('portfolio GET failed:', error.message);
+    return res.status(500).json({ error: 'Could not load this portfolio.' });
+  }
+});
+ 
+
+app.post('/suggest-projects', aiLimiter, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const name = cleanText(body.name || '');
+    const medium = cleanText(body.medium || '');
+    const description = cleanText(body.description || '');
+    const targetLanguage = cleanText(body.targetLanguage || 'English') || 'English';
+    const existing = Array.isArray(body.projects)
+      ? body.projects.map(p => cleanText(p && p.title)).filter(Boolean)
+      : [];
+
+    try {
+      const existingLine = existing.length
+        ? `The creator already has these projects (do not repeat them): ${existing.join('; ')}.`
+        : '';
+      const aiText = await generateAiText({
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You suggest portfolio project ideas for a creative professional. ' +
+              'Return ONLY valid JSON in this exact shape: ' +
+              '{"suggestions":[{"title":"","desc":""},{"title":"","desc":""},{"title":"","desc":""}]}. ' +
+              'Provide exactly 3 suggestions. Each "title" is short (2-5 words). Each "desc" is one or two ' +
+              'sentences telling the creator what to include. Write everything in ' + targetLanguage + '. ' +
+              'Do not invent facts about the creator; only propose ideas they could build. No text outside the JSON.',
+          },
+          {
+            role: 'user',
+            content:
+              'Creator name: ' + (name || 'A creator') + '\n' +
+              'Medium / field: ' + (medium || 'general creative work') + '\n' +
+              'About them: ' + (description || '(not provided)') + '\n' +
+              existingLine,
+          },
+        ],
+        temperature: 0.4,
+        maxTokens: 600,
+      });
+
+      const parsed = parseJsonObject(aiText);
+      const suggestions = Array.isArray(parsed && parsed.suggestions) ? parsed.suggestions : [];
+      const cleanSuggestions = suggestions
+        .map(s => ({ title: cleanText(s && s.title), desc: cleanText(s && s.desc) }))
+        .filter(s => s.title && s.desc)
+        .slice(0, 3);
+
+      if (cleanSuggestions.length) {
+        return res.json({ suggestions: cleanSuggestions });
+      }
+    } catch (aiError) {
+      console.log('suggest-projects: AI path failed, using fallback:', aiError.message);
+    }
+
+    return res.json({ suggestions: fallbackProjectSuggestions({ medium, description, targetLanguage }) });
+  } catch (error) {
+    return res.json({
+      suggestions: fallbackProjectSuggestions({
+        medium: cleanText((req.body || {}).medium || ''),
+        description: cleanText((req.body || {}).description || ''),
+        targetLanguage: cleanText((req.body || {}).targetLanguage || 'English') || 'English',
+      }),
+    });
+  }
+});
+
+
 app.post('/generate', aiLimiter, async (req, res) => {
   const {
     name,
@@ -3016,6 +3285,7 @@ app.post('/generate', aiLimiter, async (req, res) => {
             8. If the input language differs from TARGET_OUTPUT_LANGUAGE, translate meaning faithfully into TARGET_OUTPUT_LANGUAGE.
             9. If any sentence accidentally remains in the source language, the output is invalid. Rewrite before returning.
             10. Do not output explanations, notes, analysis, or extra sections.
+            11. FIRST PERSON ONLY. The creator is speaking in their own voice. Write EVERY sentence — both the bio and the statement — in the first person using "I", "my", and "me". Never use the creator's name as the subject and never use "he", "she", or "they". Write "I am", "I create", "my work" — never "she is a designer" or "the creator builds". Any sentence written in third person makes the whole response INVALID; rewrite it before returning.
 
             QUALITY CHECK BEFORE RETURN:
             - Check every body sentence.
@@ -3065,7 +3335,8 @@ app.post('/generate', aiLimiter, async (req, res) => {
 
               ## ${_genBioHeading}
 
-              Write a strong 5-6 sentence portfolio bio.
+              Write a strong 5-6 sentence portfolio bio, written entirely in the FIRST PERSON ("I", "my", "me"). 
+              I am introducing myself in my own voice — never write my name as the subject, and never use "he", "she", or "they".
 
               BIO PURPOSE:
               This section is the person's profile.
@@ -3338,6 +3609,53 @@ ${JSON.stringify(customFactItems.map(item => ({ reviewId: item.reviewId, section
 
   const customSectionsForOutput = enhancedCustomSections.length ? enhancedCustomSections : customSectionItems;
 
+  let localizedSkillItems = skillItems;
+
+  if (languageFamily(safeTargetLanguage) !== 'english') {
+    localizedSkillItems = await translateSkillListStrict(skillItems, safeTargetLanguage);
+
+    for (const project of projectItems) {
+      if (!project) continue;
+      if (project.title) project.title = cleanText(await translateLabelStrict(project.title, safeTargetLanguage, { useMediumDictionary: false })) || project.title;
+      // Technical descriptions contain almost no common English function words, so the
+      // englishProseScore gate (threshold 4) skipped them and left an English description
+      // sitting under a translated title. Zero target-language words is the better signal.
+      if (project.desc) project.desc = stripLeakedJsonAndEcho(project.desc);
+      const descNeedsSweep = project.desc && (
+        leaksLatinForTarget(project.desc, safeTargetLanguage)
+        || looksLikeWrongEnglishForTarget(project.desc, safeTargetLanguage)
+        || targetLanguageSignalScore(project.desc, safeTargetLanguage) === 0
+      );
+      if (descNeedsSweep) {
+        const swept = cleanText(await translateTextStrict(project.desc, safeTargetLanguage));
+        if (swept && !translationLooksFabricated(project.desc, swept)) project.desc = swept;
+      }
+    }
+
+    for (const section of customSectionsForOutput) {
+      if (!section) continue;
+      // Section NAMES keep the dictionary: "Education" -> "Educación" is exactly what it is for.
+      if (section.name) section.name = cleanText(await translateLabelStrict(section.name, safeTargetLanguage)) || section.name;
+      for (const item of (section.items || [])) {
+        if (!item) continue;
+        // Item HEADINGS opt out of the medium dictionary. It matches on substrings, so
+        // "Freelance Software Developer" hit /software|developer/ and was replaced wholesale by
+        // the medium label "Ingeniería de software" — the user's real text destroyed.
+        if (item.heading) item.heading = cleanText(await translateLabelStrict(item.heading, safeTargetLanguage, { useMediumDictionary: false })) || item.heading;
+        if (item.desc) item.desc = stripLeakedJsonAndEcho(item.desc);
+        const itemDescNeedsSweep = item.desc && (
+          leaksLatinForTarget(item.desc, safeTargetLanguage)
+          || looksLikeWrongEnglishForTarget(item.desc, safeTargetLanguage)
+          || targetLanguageSignalScore(item.desc, safeTargetLanguage) === 0
+        );
+        if (itemDescNeedsSweep) {
+          const sweptItem = cleanText(await translateTextStrict(item.desc, safeTargetLanguage));
+          if (sweptItem && !translationLooksFabricated(item.desc, sweptItem)) item.desc = sweptItem;
+        }
+      }
+    }
+  }
+
   let generatedArtistBio = stripPortfolioMarkdownHeadingServer(extractGeneratedPortfolioSection(portfolio, _genBioHeading));
   let generatedArtistStatement = stripPortfolioMarkdownHeadingServer(extractGeneratedPortfolioSection(portfolio, _genStatementHeading));
 
@@ -3375,6 +3693,11 @@ ${JSON.stringify(customFactItems.map(item => ({ reviewId: item.reviewId, section
   portfolio = replaceGeneratedPortfolioSection(portfolio, _genBioHeading, generatedArtistBio);
   portfolio = replaceGeneratedPortfolioSection(portfolio, _genStatementHeading, generatedArtistStatement);
 
+  generatedArtistBio = stripLeakedJsonAndEcho(generatedArtistBio);
+  generatedArtistStatement = stripLeakedJsonAndEcho(generatedArtistStatement);
+
+  console.log('TITLE debug:', JSON.stringify(projectItems.map(p => p && p.title)));
+
   const localizedOutput = await buildLocalizedOutput({
     targetLanguage: safeTargetLanguage,
     artistBio: generatedArtistBio,
@@ -3386,11 +3709,13 @@ ${JSON.stringify(customFactItems.map(item => ({ reviewId: item.reviewId, section
         })
       : projectItems,
     customSections: customSectionsForOutput,
-    skills: skillItems,
+    skills: localizedSkillItems,
     name,
     medium,
     description,
   });
+
+  console.log('FactLock debug:', JSON.stringify({ enhanceProjectDescriptions, projects: projectItems.length, enhancedProjects: enhancedProjects.length, withDesc: enhancedProjects.filter(p => p && String(p.desc || '').trim()).length }));
 
   return res.json({
     portfolio,
@@ -3451,148 +3776,174 @@ function normalizeCvTextForParsing(text = '') {
 // unreachable, or returns something unexpected, extraction falls back to the local PDF parsers,
 // so the upload path can never break because Docling is down.
 // ---------------------------------------------------------------------------
-async function extractCvTextWithDocling(buffer) {
-  if (!DOCLING_URL || !buffer || !buffer.length) {
-    return '';
+// Docling returns Markdown, and a real CV is mostly TABLES. Naively replacing "|" with a space
+// flattened every table into one 200-character line: section headings stopped being detected, the
+// "|---|---|" separator rows leaked into Education and Certifications as rows of dashes, and the
+// "<!-- image -->" placeholder Docling emits for the photo became the creator's NAME.
+function isMarkdownTableSeparator(line = '') {
+  const text = String(line || '').trim();
+  return /-{2,}/.test(text) && /^\|?[\s:|-]+\|?$/.test(text);
+}
+
+function doclingMarkdownToCvText(markdown = '') {
+  const lines = String(markdown || '').replace(/\r\n?/g, '\n').split('\n');
+  const out = [];
+
+  for (let i = 0; i < lines.length; i += 1) {
+    let line = lines[i];
+
+    // Figure/table placeholders are not CV content.
+    line = line.replace(/<!--[\s\S]*?-->/g, '').trim();
+    if (!line) { out.push(''); continue; }
+
+    // Drop separator rows entirely.
+    if (isMarkdownTableSeparator(line)) continue;
+
+    if (/^\s*\|.*\|\s*$/.test(line)) {
+      // A table row. If the NEXT line is a separator, this is the column-label row, not content.
+      if (isMarkdownTableSeparator(lines[i + 1] || '')) continue;
+      const cells = line.split('|').map(cell => cell.trim()).filter(Boolean);
+      if (!cells.length) continue;
+      // One line per table ROW keeps the row readable and keeps headings on their own lines.
+      out.push(cells.join(' · '));
+      continue;
+    }
+
+    line = line.replace(/^#{1,6}\s*/, '');                       // heading markers
+    line = line.replace(/^\s*[-*+]\s+/, '• ');                   // bullets
+    line = line.replace(/^\s*\d+[.)]\s+/, '• ');                 // numbered bullets
+    line = line.replace(/\*\*(.*?)\*\*/g, '$1');                 // bold
+    line = line.replace(/__(.*?)__/g, '$1');                      // bold
+    line = line.replace(/`([^`]*)`/g, '$1');                      // code
+    line = line.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 $2');    // [text](url) -> text url
+    line = line.replace(/^>\s*/, '');                             // blockquote
+    out.push(line.trim());
   }
 
-  const controller = new AbortController();
+  return out.join('\n');
+}
 
-  const timeout = setTimeout(
-    () => controller.abort(),
-    DOCLING_TIMEOUT_MS
-  );
+async function extractCvTextWithDocling(buffer) {
+  if (!DOCLING_URL) return '';
 
-  try {
-    const form = new FormData();
+  const base = DOCLING_URL.replace(/\/+$/, '');
+  const endpoints = ['/v1/convert/file', '/v1alpha/convert/file'];
+  const failures = [];
 
-    form.append(
-      'files',
-      new Blob(
-        [buffer],
-        { type: 'application/pdf' }
-      ),
-      'cv.pdf'
-    );
+  for (const endpoint of endpoints) {
+    try {
+      const form = new FormData();
+      form.append('files', new Blob([buffer], { type: 'application/pdf' }), 'cv.pdf');
+      form.append('from_formats', 'pdf');
+      form.append('to_formats', 'md');
+      form.append('do_ocr', DOCLING_OCR === 'true' ? 'true' : 'false');
+      form.append('image_export_mode', 'placeholder');
+      form.append('table_mode', 'accurate');
 
-    form.append('from_formats', 'pdf');
-    form.append('to_formats', 'md');
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), DOCLING_TIMEOUT_MS);
 
-    form.append(
-      'do_ocr',
-      DOCLING_OCR === 'true'
-        ? 'true'
-        : 'false'
-    );
+      const headers = { Accept: 'application/json' };
+      if (DOCLING_API_KEY) headers['X-Api-Key'] = DOCLING_API_KEY;
 
-    const baseUrl = DOCLING_URL.replace(/\/+$/, '');
-
-    const response = await fetch(
-      `${baseUrl}/v1/convert/file`,
-      {
+      const response = await fetch(`${base}${endpoint}`, {
         method: 'POST',
         body: form,
         signal: controller.signal,
-        headers: DOCLING_API_KEY
-          ? {
-              Authorization:
-                `Bearer ${DOCLING_API_KEY}`,
-            }
-          : {},
+        headers,
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        failures.push(
+          `${endpoint} -> HTTP ${response.status}${body ? ` | body: ${body}` : ''}`
+        );
+        continue;
       }
-    );
 
-    if (!response.ok) {
-      const errorText = await response
-        .text()
-        .catch(() => '');
+      const data = await response.json().catch(() => ({}));
 
-      throw new Error(
-        `Docling responded with ${response.status}` +
-        (
-          errorText
-            ? `: ${errorText.slice(0, 300)}`
-            : ''
-        )
+      const markdown = String(
+        data?.document?.md_content
+        || data?.document?.markdown
+        || data?.md_content
+        || (Array.isArray(data?.documents)
+          ? (data.documents[0]?.md_content || '')
+          : '')
+        || ''
+      ).trim();
+
+      if (!markdown) {
+        failures.push(
+          `${endpoint} -> 200 OK but md_content is EMPTY`
+          + ` | status: ${JSON.stringify(data?.status ?? null)}`
+          + ` | errors: ${JSON.stringify(data?.errors ?? null)}`
+          + ` | document_keys: ${JSON.stringify(Object.keys(data?.document || {}))}`
+        );
+        continue;
+      }
+
+      console.log(
+        'CV extraction: Docling succeeded',
+        JSON.stringify({ endpoint, chars: markdown.length })
       );
-    }
 
-    const data = await response
-      .json()
-      .catch(() => ({}));
-
-    if (
-      data?.status &&
-      ![
-        'success',
-        'partial_success',
-      ].includes(data.status)
-    ) {
-      throw new Error(
-        `Docling conversion status: ${data.status}`
+      return normalizeCvTextForParsing(
+        doclingMarkdownToCvText(markdown)
       );
+    } catch (error) {
+      failures.push(`${endpoint} -> ${error.message}`);
     }
-
-    const markdown = String(
-      data?.document?.md_content ||
-      data?.document?.markdown ||
-      data?.md_content ||
-      (
-        Array.isArray(data?.documents)
-          ? (
-              data.documents[0]?.md_content ||
-              data.documents[0]?.markdown ||
-              ''
-            )
-          : ''
-      ) ||
-      ''
-    ).trim();
-
-    if (!markdown) {
-      throw new Error(
-        'Docling returned no Markdown content. ' +
-        `Response keys: ${Object.keys(data).join(', ')}`
-      );
-    }
-
-    console.log(
-      'CV extraction: Docling succeeded',
-      JSON.stringify({
-        chars: markdown.length,
-        status: data?.status || 'success',
-      })
-    );
-
-    return normalizeCvTextForParsing(
-      markdown
-        .replace(/^#{1,6}\s*/gm, '')
-        .replace(/^\s*[*+]\s+/gm, '• ')
-        .replace(/\*\*(.*?)\*\*/g, '$1')
-        .replace(/\|/g, ' ')
-    );
-  } catch (error) {
-    const reason =
-      error?.name === 'AbortError'
-        ? `request timed out after ${DOCLING_TIMEOUT_MS}ms`
-        : error.message;
-
-    console.warn(
-      'Docling extraction unavailable; ' +
-      `falling back to local PDF parsing: ${reason}`
-    );
-
-    return '';
-  } finally {
-    clearTimeout(timeout);
   }
-}
-async function extractCvTextFromPdfBuffer(buffer) {
-  if (!buffer || !buffer.length) return '';
 
-  // Preferred: IBM Docling (real document structure, not guessed layout).
-  const doclingText = await extractCvTextWithDocling(buffer);
-  if (doclingText) return doclingText;
+  console.warn(
+    `Docling produced no text. EVERY attempt, in order:\n${failures
+      .map((failure) => `  - ${failure}`)
+      .join('\n')}`
+  );
+
+  return '';
+}
+
+// Both extractions, so the caller can parse each and keep the better result. Docling understands
+// document structure far better than a text dump, but it is a service: it can return a layout the
+// parser reads worse than the plain text. Trusting it blindly once turned a good CV into a name of
+// "ک" and zero sections. Now it has to EARN the win.
+async function extractCvTextCandidates(buffer) {
+  const docling = await extractCvTextWithDocling(buffer).catch(() => '');
+  const local = await extractCvTextLocallyFromPdf(buffer).catch(() => '');
+  // Do NOT cleanText() here — it collapses newlines and flattens section structure.
+  return { docling: String(docling || '').trim(), local: String(local || '').trim() };
+}
+
+function parseBestCv({ docling = '', local = '' } = {}, embeddedLinks = []) {
+  const results = [];
+  if (docling) {
+    const parsed = parseCvTextLocally(docling, embeddedLinks);
+    results.push({ source: 'docling', parsed, score: cvParseQuality(parsed) });
+  }
+  if (local) {
+    const parsed = parseCvTextLocally(local, embeddedLinks);
+    results.push({ source: 'local', parsed, score: cvParseQuality(parsed) });
+  }
+  if (!results.length) return { source: 'none', parsed: parseCvTextLocally('', embeddedLinks), score: -1 };
+
+  results.sort((a, b) => b.score - a.score);
+  const best = results[0];
+  console.log('CV parse: chose', JSON.stringify({
+    source: best.source,
+    scores: results.map(r => `${r.source}=${r.score}`).join(' '),
+    name: best.parsed.name,
+    sections: (best.parsed.customSections || []).length,
+    skills: (best.parsed.skills || []).length,
+  }));
+  return best;
+}
+
+async function extractCvTextLocallyFromPdf(buffer) {
+  if (!buffer || !buffer.length) return '';
 
   // First parser: modern pdf-parse. It handles many CV PDFs that pdfreader rejects.
   try {
@@ -3653,13 +4004,33 @@ app.post('/parse-cv' , aiLimiter, upload.single('cv'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
-    const cvText = await extractCvTextFromPdfBuffer(req.file.buffer);
+    const candidates = await extractCvTextCandidates(req.file.buffer);
     const embeddedCvLinks = await extractCvEmbeddedLinksFromPdfBuffer(req.file.buffer);
-    console.log('CV extraction:', JSON.stringify({ textChars: cleanText(cvText).length, embeddedLinks: embeddedCvLinks.length }));
-    if (!cleanText(cvText)) {
+    console.log('CV extraction:', JSON.stringify({
+      doclingChars: candidates.docling.length,
+      localChars: candidates.local.length,
+      embeddedLinks: embeddedCvLinks.length,
+    }));
+
+    if (!candidates.docling && !candidates.local) {
       return res.json({
         ...parseCvTextLocally('', embeddedCvLinks),
         warning: 'CV text could not be read from this PDF. Please fill the form manually or upload a text-based PDF.'
+      });
+    }
+
+    // Parse BOTH extractions and keep whichever actually recovered more of the CV.
+    const best = parseBestCv(candidates, embeddedCvLinks);
+    const cvText = best.source === 'docling' ? candidates.docling : candidates.local;
+        // Option B: stop when extracted PDF text is genuinely unreadable.
+    const readability = assessCvReadability(cvText, best.parsed);
+    console.log('CV readability diagnostic:', JSON.stringify(readability));
+    if (readability.unreadable) {
+      console.log('CV unreadable:', JSON.stringify(readability));
+      return res.json({
+        ...parseCvTextLocally('', embeddedCvLinks),
+        unreadable: true,
+        warning: UNREADABLE_CV_MESSAGE,
       });
     }
     await sendToParserAndRespond(cvText, res, embeddedCvLinks);
@@ -3693,7 +4064,20 @@ function uniq(items = []) {
 }
 
 function cleanCvLine(value = '') {
+  // Docling returns HTML-escaped text, so "Data & ML" arrives as "Data &amp; ML". The skill
+  // splitter then breaks on the ";" INSIDE the entity, producing the skill "Data &amp" — which
+  // the translator then faithfully rendered as "Datos y". Decode before anything else splits.
   return String(value || '')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;|&apos;/gi, "'")
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#(\d{2,5});/g, (match, code) => {
+      const num = Number(code);
+      return num > 0 && num < 1114112 ? String.fromCodePoint(num) : match;
+    })
     .replace(/\u00a0/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -3730,7 +4114,7 @@ function normalizeCvHeading(value = '') {
 }
 
 const CV_SECTION_ALIASES = {
-  summary: ['SUMMARY', 'PROFESSIONAL SUMMARY', 'PROFILE', 'ABOUT ME', 'ABOUT', 'OBJECTIVE', 'CAREER OBJECTIVE', 'SUMMARY OF QUALIFICATIONS', 'PERSONAL SUMMARY', 'PERSONAL PROFILE', 'PROFESSIONAL PROFILE', 'CAREER SUMMARY', 'BIO'],
+  summary: ['SUMMARY', 'PROFESSIONAL SUMMARY', 'PROFILE','PROFILE SUMMARY', 'EXECUTIVE SUMMARY', 'CAREER PROFILE', 'ABOUT ME', 'ABOUT', 'OBJECTIVE', 'CAREER OBJECTIVE', 'SUMMARY OF QUALIFICATIONS', 'PERSONAL SUMMARY', 'PERSONAL PROFILE', 'PROFESSIONAL PROFILE', 'CAREER SUMMARY', 'BIO'],
   skills: ['TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'TECHNOLOGIES', 'TECHNICAL EXPERTISE', 'CORE COMPETENCIES', 'COMPETENCIES', 'SKILLS & TOOLS', 'SKILLS AND TOOLS', 'TOOLS & TECHNOLOGIES', 'KEY SKILLS', 'AREAS OF EXPERTISE', 'EXPERTISE', 'SKILLS & ABILITIES', 'TECHNICAL SKILLS & TOOLS'],
   projects: ['PROJECTS', 'PROJECT EXPERIENCE', 'ACADEMIC PROJECTS', 'SELECTED PROJECTS', 'KEY PROJECTS', 'PERSONAL PROJECTS', 'NOTABLE PROJECTS', 'FEATURED PROJECTS', 'RELEVANT PROJECTS', 'SIDE PROJECTS'],
   education: ['EDUCATION', 'ACADEMIC BACKGROUND', 'EDUCATIONAL BACKGROUND', 'ACADEMIC QUALIFICATIONS', 'EDUCATION & QUALIFICATIONS', 'QUALIFICATIONS', 'ACADEMICS', 'EDUCATION AND TRAINING'],
@@ -3748,7 +4132,7 @@ const CV_SECTION_ALIASES = {
 // ---------------------------------------------------------------------------
 // Multilingual CV section headings.
 // A creator writes their CV in their own language, so the parser must recognise the heading in
-// their language too. These are the headings that appear on real CVs in each of the 17 output
+// their language too. These are the headings that appear on real CVs in each of the output
 // languages, not just a translation of the English word.
 // ---------------------------------------------------------------------------
 const CV_SECTION_ALIASES_MULTILINGUAL = {
@@ -3962,22 +4346,20 @@ function matchCvHeading(line = '') {
     }
   }
 
-  // A bare heading (no trailing content on the line) must itself be short; a long line
-  // with no recognized "HEADING:" prefix is body text.
   if (raw.length > 60) return null;
 
-  // 2) Exact match (original fast path)
   if (CV_HEADING_TO_SECTION[normalized]) return { key: CV_HEADING_TO_SECTION[normalized], trailing: '' };
-
-  // 3) Tightly-guarded fuzzy match: a known multi-word heading followed by extra words.
-  //    Never fires on comma lists (skill lines) or ordinary sentences.
   if (!raw.includes(',') && raw.length <= 44) {
-    const headingShaped = raw === raw.toUpperCase() || /^([A-Z][a-zA-Z]*\s*){1,5}$/.test(raw);
+    const headingShaped = raw === raw.toUpperCase() || /^([A-Z][a-zA-Z]*|&)(\s+([A-Z][a-zA-Z]*|and|of|&)){0,5}$/.test(raw);
     if (headingShaped && !/[a-z]{4,}\./.test(raw)) {
       for (const alias of CV_SORTED_ALIASES) {
         if (normalized === alias) continue;
-        if (alias.split(' ').length < 2) continue; // single-word aliases are too risky to fuzzy-match
+        if (alias.split(' ').length < 2) continue; // single-word aliases are too risky as a PREFIX
         if (normalized.startsWith(alias + ' ')) return { key: CV_HEADING_TO_SECTION[alias], trailing: '' };
+      }
+      for (const alias of CV_SORTED_ALIASES) {
+        if (normalized === alias) continue;
+        if (normalized.endsWith(' ' + alias)) return { key: CV_HEADING_TO_SECTION[alias], trailing: '' };
       }
     }
   }
@@ -4029,17 +4411,48 @@ function joinWrappedCvHeadings(lines = []) {
   return out;
 }
 
+// A heading that is not in any alias table — in any of the 15 languages — used to be treated
+// as body text and swallowed by whatever section came before it. That is how "PROFILE SUMMARY"
+// and "MEMBERSHIPS" ended up inside the Awards description. No alias list can ever be complete,
+// so recognise heading SHAPE as a fallback: short, all-caps (or a caseless script such as
+// Arabic/Urdu/Chinese), no digits, no punctuation, 1-4 words, and actually followed by content.
+// Guards are deliberately tight so skill lines ("HTML CSS", "REACT") and credential abbreviations
+// ("MBBS", "ACLS", "FCPS") are never promoted to sections.
+function looksLikeUnknownCvHeading(line = '', nextLine = '') {
+  const raw = cleanCvLine(line);
+  if (!raw || raw.length < 4 || raw.length > 40) return false;
+  if (/[,.;:()\/@]/.test(raw)) return false;
+  if (/\d/.test(raw)) return false;
+  if (/^[\u2022\-*]/.test(raw)) return false;
+  const hasLatin = /[A-Za-z]/.test(raw);
+  if (hasLatin && raw !== raw.toUpperCase()) return false;
+  const words = raw.split(/\s+/).filter(Boolean);
+  if (!words.length || words.length > 4) return false;
+  if (hasLatin) {
+    const longestWord = Math.max(...words.map(word => word.replace(/[^\p{L}]/gu, '').length));
+    if (words.length === 1 ? longestWord < 6 : longestWord < 5) return false;
+  }
+  const next = cleanCvLine(nextLine);
+  if (!next || looksLikeUnknownCvHeading(next)) return false;
+  return true;
+}
+
 function cvSectionsFromLines(rawLines = []) {
   const lines = joinWrappedCvHeadings(rawLines);
   const sections = {};
   let currentKey = null;
 
-  lines.forEach(line => {
+  lines.forEach((line, index) => {
     const match = matchCvHeading(line);
     if (match) {
       currentKey = match.key;
       if (!sections[currentKey]) sections[currentKey] = [];
       if (match.trailing) sections[currentKey].push(match.trailing);
+      return;
+    }
+    if (looksLikeUnknownCvHeading(line, lines[index + 1])) {
+      currentKey = 'custom:' + cleanCvLine(line);
+      if (!sections[currentKey]) sections[currentKey] = [];
       return;
     }
     if (currentKey) sections[currentKey].push(line);
@@ -4167,27 +4580,64 @@ function extractCvEmbeddedLinksFromRawPdfBuffer(buffer) {
   return links;
 }
 
+// PDF.js refuses to run when its API and its Worker come from different installs of pdfjs-dist.
+// The old code resolved the API with require() and the worker with a SEPARATE require.resolve(),
+// so Node was free to pick two different copies (one hoisted at the project root, one in backend).
+// The worker path is now derived from the directory the API itself was loaded from, so they can
+// never disagree — and the worker is disabled anyway, which removes the failure mode entirely.
+let _pdfjsCache;
+function loadPdfjsWithMatchingWorker() {
+  if (_pdfjsCache !== undefined) return _pdfjsCache;
+
+  const path = require('path');
+  const fs = require('fs');
+  const entries = [
+    'pdfjs-dist/legacy/build/pdf.js',
+    'pdfjs-dist/build/pdf.js',
+    'pdfjs-dist/legacy/build/pdf.cjs',
+  ];
+
+  for (const entry of entries) {
+    let resolved;
+    try { resolved = require.resolve(entry); } catch (_) { continue; }
+
+    let lib;
+    try { lib = require(resolved); } catch (_) { continue; }
+    const api = (lib && lib.getDocument) ? lib : (lib && lib.default && lib.default.getDocument ? lib.default : null);
+    if (!api) continue;
+
+    if (api.GlobalWorkerOptions) {
+      // Same folder as the API => same version, guaranteed.
+      const sameDirWorker = path.join(path.dirname(resolved), 'pdf.worker.js');
+      if (fs.existsSync(sameDirWorker)) api.GlobalWorkerOptions.workerSrc = sameDirWorker;
+      else api.GlobalWorkerOptions.workerSrc = '';
+    }
+    console.log('pdfjs loaded from', JSON.stringify({ path: resolved, version: api.version || 'unknown' }));
+    _pdfjsCache = api;
+    return api;
+  }
+
+  _pdfjsCache = null;
+  return null;
+}
+
 async function extractCvEmbeddedLinksFromPdfBuffer(buffer) {
   try {
-    let pdfjsLib;
-    try {
-      pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
-
-      // Force PDF.js to use the worker from the same pdfjs-dist package version.
-      // Without this, pdf-parse can pull pdfjs-dist@5.x worker and break embedded link extraction.
-      if (pdfjsLib.GlobalWorkerOptions) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = require.resolve('pdfjs-dist/legacy/build/pdf.worker.js');
-      }
-    } catch (error) {
-      console.warn('pdfjs-dist not installed; embedded CV links skipped.');
+    const pdfjsLib = loadPdfjsWithMatchingWorker();
+    if (!pdfjsLib) {
+      console.warn('pdfjs-dist not usable; embedded CV links skipped.');
       return [];
     }
 
     const pdf = await pdfjsLib.getDocument({
       data: new Uint8Array(buffer),
-      disableWorker: false,
+      // Run PDF.js on this thread. In Node there is nothing to gain from a worker, and a worker is
+      // exactly what produced "The API version 3.11.174 does not match the Worker version 5.4.296"
+      // — which silently threw away every embedded link in the CV.
+      disableWorker: true,
       useWorkerFetch: false,
       isEvalSupported: false,
+      useSystemFonts: false,
     }).promise;
 
     const results = [];
@@ -4217,22 +4667,38 @@ async function extractCvEmbeddedLinksFromPdfBuffer(buffer) {
   }
 }
 
+// A real name is not a single stray glyph, a row of dashes, or a Docling "<!-- image -->"
+// placeholder. Without this guard the first junk line in the extracted text became the creator's
+// name — which is exactly how a CV once came back with the name "ک".
+function looksLikeCvNameLine(value = '') {
+  const text = cleanCvLine(value);
+  if (!text) return false;
+  if (text.length < 3 || text.length > 80) return false;
+  if (/<!--|-->/.test(text)) return false;
+  if (/^[-–—_=*·•|~^#>\s.,:;'"()\[\]]+$/.test(text)) return false;
+  const letters = (text.match(/\p{L}/gu) || []).length;
+  if (letters < 2) return false;                 // a single letter is a glyph, not a name
+  if (letters / text.length < 0.4) return false; // mostly punctuation
+  return true;
+}
+
 function extractNameAndMedium(lines = []) {
   let name = '';
   let medium = '';
 
-  for (let i = 0; i < Math.min(lines.length, 12); i += 1) {
+  for (let i = 0; i < Math.min(lines.length, 14); i += 1) {
     const line = cleanCvLine(lines[i]);
     if (!line || isCvSectionHeading(line)) continue;
     if (/@|\|/.test(line) || /\+?\d[\d\s().-]{6,}/.test(line)) continue;
-    if (line.length > 80) continue;
+    if (!looksLikeCvNameLine(line)) continue;
 
     name = line;
     for (const next of lines.slice(i + 1, i + 5)) {
       const candidate = cleanCvLine(next);
       if (!candidate || isCvSectionHeading(candidate)) break;
       if (/@|\|/.test(candidate) || /\+?\d[\d\s().-]{6,}/.test(candidate)) continue;
-      if (candidate.length < 60) {
+      if (!looksLikeCvNameLine(candidate)) continue;
+      if (candidate.length < 70) {
         medium = candidate;
         break;
       }
@@ -4241,6 +4707,21 @@ function extractNameAndMedium(lines = []) {
   }
 
   return { name, medium };
+}
+
+// How much did we actually recover from this text? Used to pick between the Docling extraction and
+// the local PDF extraction instead of trusting Docling blindly.
+function cvParseQuality(parsed) {
+  if (!parsed) return -1;
+  let score = 0;
+  if (parsed.name && parsed.name.length >= 3) score += 4;
+  if (parsed.medium) score += 2;
+  score += Math.min((parsed.skills || []).length, 12);
+  score += Math.min((parsed.projects || []).length * 3, 15);
+  score += (parsed.customSections || []).reduce(
+    (total, section) => total + 3 + Math.min((section.items || []).length, 6), 0);
+  if (cleanText(parsed.description || '').length > 40) score += 2;
+  return score;
 }
 
 function parseCvContact(fullText = '', embeddedLinks = []) {
@@ -4287,7 +4768,44 @@ function isTechStackLine(line = '') {
   return Boolean((clean.includes('|') || clean.includes(',')) && CV_TECH_WORDS.test(clean));
 }
 
+function cvLineIsDateOnly(value = '') {
+  const text = cleanCvLine(value).replace(/[\u2013\u2014]/g, '-');
+  if (!text) return false;
+  return /^(present|current|ongoing|since)?[\s.,-]*((jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s*)?\d{2,4}(\s*[-\u2013to]+\s*((jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s*)?(\d{2,4}|present|current|date|now))?[\s.,-]*$/i.test(text);
+}
+
+function cvLineIsContinuation(line = '', previous = '') {
+  const text = cleanCvLine(line);
+  const prev = cleanCvLine(previous);
+  if (!text || !prev) return false;
+  if (/^[a-z\u00DF-\u00FF]/.test(text)) return true;
+  if (/[,&:;\/]$/.test(prev) || /\b(and|with|of|for|at|in|the)$/i.test(prev)) return true;
+  if (cvLineIsDateOnly(text)) return true;
+  return false;
+}
+
 function bulletItemsFromLines(lines = []) {
+  const cleaned = lines.map(cleanCvLine).filter(line => line && !isCvSectionHeading(line));
+  const hasBullets = cleaned.some(line => /^[\u2022\-*]/.test(line));
+
+  // A section with NO bullet characters used to collapse into ONE item, because the only
+  // split signal was a bullet. That is exactly what Docling table rows produce, so every
+  // certification, publication and language merged into a single blob. Split per line and
+  // merge only genuine continuations. The " - " join lets splitHeadingDesc() pair a detail
+  // line with its entry line as heading + desc, with no downstream change.
+  if (!hasBullets) {
+    const out = [];
+    for (const line of cleaned) {
+      if (out.length && cvLineIsContinuation(line, out[out.length - 1])) {
+        const joiner = cvLineIsDateOnly(line) || /^[a-z\u00DF-\u00FF]/.test(line) ? ' ' : ' - ';
+        out[out.length - 1] += joiner + line;
+        continue;
+      }
+      out.push(line);
+    }
+    return out.filter(item => item.length > 2);
+  }
+
   const items = [];
   let current = '';
 
@@ -4450,19 +4968,25 @@ function parseCvProjects(projectLines = [], embeddedLinks = []) {
 
 function splitHeadingDesc(item = '') {
   const clean = cleanCvLine(item);
-  if (clean.includes('—')) {
-    const [heading, ...rest] = clean.split('—');
-    return { heading: cleanCvLine(heading), desc: cleanCvLine(rest.join('—')) };
+  if (!clean) return { heading: '', desc: '' };
+  for (const sep of ['—', ' – ', ' - ', ' — ']) {
+    if (clean.includes(sep)) {
+      const idx = clean.indexOf(sep);
+      const heading = cleanCvLine(clean.slice(0, idx));
+      const desc = cleanCvLine(clean.slice(idx + sep.length));
+      if (heading && desc) return { heading, desc };
+    }
   }
-  if (clean.includes(' - ')) {
-    const [heading, ...rest] = clean.split(' - ');
-    return { heading: cleanCvLine(heading), desc: cleanCvLine(rest.join(' - ')) };
-  }
+
   if (clean.includes(':') && clean.split(':')[0].length < 90) {
-    const [heading, ...rest] = clean.split(':');
-    return { heading: cleanCvLine(heading), desc: cleanCvLine(rest.join(':')) };
+    const [head, ...rest] = clean.split(':');
+    return { heading: cleanCvLine(head), desc: cleanCvLine(rest.join(':')) };
   }
-  return { heading: clean.slice(0, 120), desc: '' };
+
+  if (clean.length <= 120) return { heading: clean, desc: '' };
+  const cut = clean.lastIndexOf(' ', 120);
+  const at = cut > 40 ? cut : 120;
+  return { heading: cleanCvLine(clean.slice(0, at)), desc: cleanCvLine(clean.slice(at)) };
 }
 
 // A certificate proof URL virtually always has a path (coursera.org/verify/..., credly.com/badges/...).
@@ -4813,6 +5337,24 @@ function parseCvCustomSections(sections = {}, embeddedLinks = []) {
     }
 
     if (items.length) customSections.push({ name, items });
+  });
+
+  const titleCaseCvHeading = (value = '') => String(value || '')
+    .toLowerCase()
+    .replace(/\b\p{L}/gu, ch => ch.toUpperCase())
+    .trim();
+
+  Object.keys(sections).forEach(key => {
+    if (!key.startsWith('custom:')) return;
+    const lines = sections[key];
+    if (!Array.isArray(lines) || !lines.length) return;
+    const rawName = key.slice(7).replace(/\s+/g, ' ').trim();
+    if (!rawName) return;
+    const items = bulletItemsFromLines(lines).map(item => {
+      const { heading, desc } = splitHeadingDesc(item);
+      return { heading, desc, link: null };
+    });
+    if (items.length) customSections.push({ name: titleCaseCvHeading(rawName), items });
   });
 
   return customSections;
@@ -5267,6 +5809,7 @@ module.exports = {
   // Exported for regression tests only; routes still use the same internal functions.
   __test: {
     parseCvTextLocally,
+    doclingMarkdownToCvText,
     buildLocalStrongProjectRegeneration,
     regenerationIsStrongEnough,
     regenerationUsesFirstPerson,
@@ -5291,8 +5834,3 @@ module.exports = {
     languageFamily,
   },
 };
-
-
-
-
-

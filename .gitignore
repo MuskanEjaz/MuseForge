@@ -7,7 +7,6 @@ backend/.env
 backend/data/
 *.log
 .DS_Store
-
 public/museforge-demo.mp4
 .env.local
 .env.production
@@ -17,5 +16,8 @@ clean-*.js
 fix-*.js
 hard-final-*.js
 final-*.js
-
 backend/test-files/
+# build & local junk
+probe-cv-output.txt
+.docling-venv/
+backend/.docling-venv/

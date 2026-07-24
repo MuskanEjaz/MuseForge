@@ -1,0 +1,8 @@
+cd backend
+
+Activate Docling environment :
+.\.docling-venv\Scripts\Activate.ps1
+
+
+Start Docling :
+docling-serve run --enable-ui
