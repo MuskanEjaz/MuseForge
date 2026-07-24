@@ -347,23 +347,23 @@ CV readability diagnostic: {"unreadable":true,"reason":"collapsed-text-no-struct
   "singleGlyphRatio":0,"dominantScript":"latin","dominantWords":316,"structured":0,"totalLines":1}
 ```
 
-Covered by `docling-cv-test.js`, `test-cv-readability.js`, `probe-cv.js`, `probe-ocr.js`, `probe-sections.js`.
+Covered by `docling-cv-test.js`, `test-cv-readability.js`, and the diagnostic probes `probe-cv.js`, `probe-ocr.js`, `probe-sections.js`.
 
 ### 4. FactLock and language suites
 
 ```bash
-node factlock-test.js         # the fabrication gates
-node adversarial-test.js      # deliberately hostile model behaviour
-node language-e2e-test.js     # generations across the supported languages
-node regenerate-e2e-test.js   # regenerations, including fabrication attempts
-node lang-test.js             # per-language output validation
-node lang-headings-test.js    # headings and section names, not just body text
-node first-person-test.js     # every section speaks as the creator
-node multilang-cv-test.js     # CVs written in many languages, parsed
-node cv-test-harness.js       # CV section recall at scale
-node links-test.js            # embedded PDF link routing
-node urdu-arabic-test.js      # Arabic-block script separation
-node auth-smoke-test.js       # auth flow
+node factlock-test.js          # the fabrication gates
+node adversarial-test.js       # deliberately hostile model behaviour
+node language-e2e-test.js      # generations across the supported languages
+node regenerate-e2e-test.js    # regenerations, including fabrication attempts
+node lang-test.js              # per-language output validation
+node lang-headings-test.js     # headings and section names, not just body text
+node first-person-test.js      # every section speaks as the creator
+node multilang-cv-test.js      # CVs written in many languages, parsed
+node cv-test-harness.js        # CV section recall at scale
+node links-test.js             # embedded PDF link routing
+node test-suggest-projects.js  # AI project suggestions route
+node auth-smoke-test.js        # auth flow
 ```
 
 The end-to-end suites drive the real endpoints against a **deliberately hostile mock model** that answers in the wrong language, answers in the wrong script, throws 429s, echoes the prompt back, and tries to smuggle in fabricated metrics. They measure **the guard rails**, not live Granite quality. The mock and its failure-injection rate are in the repo — change them and re-run.
@@ -431,9 +431,7 @@ MUSEFORGE_COMPETITION_FINAL_TESTED/
 │   ├── cos-storage.js              # IBM Cloud Object Storage layer (ibm-cos-sdk, IAM)
 │   ├── ibm-status.js               # Read-only IBM stack probe (GET /ibm-status)
 │   ├── project-suggestions.js      # AI project suggestions via the Granite dispatch
-│   ├── .docling-venv/              # Local Docling service environment
 │   ├── data/                       # Local JSON store
-│   ├── test-files/                 # Sample CVs for the parsing suites
 │   │
 │   ├── verify-ibm.js               # IAM + Granite + Docling live check
 │   ├── verify-langchain.js         # ChatWatsonx path check
@@ -452,7 +450,6 @@ MUSEFORGE_COMPETITION_FINAL_TESTED/
 │   ├── docling-cv-test.js          # Docling extraction
 │   ├── test-cv-readability.js      # Unreadable-document classifier
 │   ├── links-test.js               # Embedded PDF link routing
-│   ├── urdu-arabic-test.js         # Arabic-block script separation
 │   ├── test-cos-storage.js         # COS storage layer (10 checks)
 │   ├── test-ibm-status.js          # /ibm-status probe
 │   ├── test-suggest-projects.js    # Project suggestions route
@@ -757,7 +754,7 @@ Full write-up: [`docs/IBM_BOB_EVIDENCE.md`](docs/IBM_BOB_EVIDENCE.md) · Invento
 ## ⚠️ Known Limitations
 
 - **Fabrication defence is structural, not semantic.** The gates catch invented numbers, invented credentials, dropped facts, empty paraphrase, prompt echo, wrong voice and wrong language. A fluent, plausible invention that uses no numbers and no credential words can still reach the review step — which is exactly why the creator must approve every item before publication. The human review is not a UX flourish; it is the last gate.
-- **The anchor and domain comparison is strongest for Latin-script output.** For Chinese, Japanese, Korean, Arabic-block and Russian output the number guard and the prompt constraints carry that load. Extending anchor comparison to every script is a known next step.
+- **The anchor and domain comparison is strongest for Latin-script output.** For Chinese, Japanese, Korean and Russian output the number guard and the prompt constraints carry that load. Extending anchor comparison to every script is a known next step.
 - **Data layer migration to COS is pending.** IBM Cloud Object Storage is provisioned, credentialled and verified with a passing round-trip, and `cos-storage.js` is in the repo; users, public portfolios and history currently run on Supabase with a local JSON fallback.
 - **Embedded PDF link extraction can fail on some documents** when the `pdfjs-dist` API and worker versions disagree; extraction falls back cleanly and the CV still parses.
 - **Docling is optional.** Without it, document understanding is weaker.
