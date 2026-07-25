@@ -1520,7 +1520,7 @@ function AuthScreen({ mode, onBack, onSwitch, onSubmit, onGoogleSubmit, onForgot
           </label>
           <label>
             <span>Password</span>
-            <div className="auth-input-wrap"><span aria-hidden="true">♙</span>< input type={showPassword ? "text" : "password"} autoComplete={isSignup ? 'new-password' : 'current-password'} minLength={8} value={form.password} onChange={event => update('password', event.target.value)} placeholder="At least 8 characters" required /><button
+            <div className="auth-input-wrap"><span aria-hidden="true">♙</span><input type={showPassword ? "text" : "password"} autoComplete={isSignup ? 'new-password' : 'current-password'} minLength={8} value={form.password} onChange={event => update('password', event.target.value)} placeholder="At least 8 characters" required /><button
               type="button"
               className="auth-password-toggle"
               onClick={() => setShowPassword(prev => !prev)}
@@ -1737,6 +1737,25 @@ function App() {
   return storedAuth.token && storedAuth.user ? 'app' : 'welcome';
 });
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!profileMenuOpen) return undefined;
+    const handlePointerDown = event => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setProfileMenuOpen(false);
+      }
+    };
+    const handleKeyDown = event => {
+      if (event.key === 'Escape') setProfileMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [profileMenuOpen]);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [authUser, setAuthUser] = useState(() => storedAuth.user || null);
   const [authLoading, setAuthLoading] = useState(Boolean(authLink.verifyToken));
@@ -3492,7 +3511,7 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     ${customHTML}
     ${contactHTML}
   </div>
-  <div class="footer">\n    <p>Created with MuseForge — Built with <strong>IBM Bob</strong> · Powered by <strong>IBM Granite on watsonx.ai</strong> + <strong>IBM Docling</strong></div>
+  <div class="footer">\n    <p>Created with MuseForge — Built with IBM Bob</p>\n    <span>Powered by IBM watsonx.ai Granite · CV intelligence by IBM Docling</span>\n  </div>
   <script>
     document.querySelectorAll('.hero-nav-link').forEach(l => {
       l.addEventListener('click', e => {
@@ -3713,7 +3732,7 @@ ${section.items.map(item => `- ${item.heading}${item.desc ? `: ${item.desc}` : '
                         Start
                       </button>
 
-                      <div className="profile-menu-wrap">
+                      <div className="profile-menu-wrap" ref={profileMenuRef}>
                         <button
                           type="button"
                           className="profile-trigger"

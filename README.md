@@ -1,4 +1,4 @@
-# MuseForge — Fact-Locked AI Portfolio Builder
+# MuseForge — AI Creative Identity Studio
 
 <p align="center">
   <img src="docs/readme-assets/museforge-landing-preview.png" alt="MuseForge landing page preview" width="900" />
@@ -20,10 +20,10 @@
 
 <p align="center"><sub><i>Every badge links to the proof in this repository, not to a vendor page.</i></sub></p>
 
-**MuseForge** turns what a creator has *actually made* — raw notes, project descriptions, CVs, images, audio, video — into a polished, shareable, multilingual portfolio, and refuses to invent a single credit they didn't earn.
+**MuseForge** turns what a creator has *actually made* — raw notes, project descriptions, CVs, images, audio, video — into a polished, shareable, multilingual portfolio that sounds like **them**, not like generic AI filler. It amplifies real work in the creator's own voice, and refuses to invent a single credit they didn't earn.
 
 **Competition:** IBM AI Builders Challenge — July Challenge: *Reimagine Creative Industries with AI*
-**Core innovation:** **FactLock** — a generation pipeline that is allowed to **reject its own output**, backed by a review panel that shows the creator every change before anything is published.
+**Core innovation:** **FactLock** — the guardrail that keeps a creative identity *authentic*. It lets the generation pipeline **reject its own output** the moment the AI drifts into invented credits or generic slop, and backs that with a review panel showing the creator every surviving change. The creator's real work and real voice always win; nothing reaches the world until they approve it.
 
 | | |
 |---|---|
@@ -67,7 +67,9 @@ They hit three walls:
 
 **Reimagine Creative Industries with AI.**
 
-MuseForge targets the exact point where creative work becomes a creative *career*: the portfolio. It behaves as a creative **partner** rather than a content generator — it interviews, structures and phrases, while holding a line no general-purpose model holds: *it will not invent your credits.* Trust is the missing primitive in AI creative tooling, and FactLock is our attempt to build it.
+Creative industries run on the one thing generic AI actively erodes: an **authentic voice**. The moment a painter, musician or writer hands their identity to a general model, they get back *award-winning*, *critically acclaimed*, *featured in major publications* — hollow superlatives that make every creator sound like every other creator. AI slop is not a style; it is the absence of one.
+
+MuseForge takes the opposite stance. It meets creators at the exact point where creative work becomes a creative *career* — the portfolio — and acts as a genuine creative **partner rather than a content generator**: it interviews, structures and phrases, in fifteen languages, while holding a line no general-purpose model holds. It will not invent a creator's credits, and it will not flatten their voice into filler. **FactLock** is how that promise is enforced in code rather than prompted and hoped for. In a category racing to generate *more*, MuseForge competes on keeping what it generates *true to the person* — and that, not raw generation, is the creative primitive the industry is missing.
 
 ---
 
@@ -729,12 +731,13 @@ Full write-up: [`docs/IBM_BOB_EVIDENCE.md`](docs/IBM_BOB_EVIDENCE.md) · Invento
 
 ## 🎬 Demo Strategy
 
-1. **Problem** (30s) — AI portfolio tools that fabricate credits
-2. **FactLock** (60s) — the review panel catching a change, then a fabricated metric being rejected and falling back to the creator's original
-3. **Creator workflow** (45s) — CV upload through to generated portfolio
-4. **Multilingual output** (20s) — language selection and generation, headings included
-5. **Public sharing** (15s) — the shareable portfolio URL
-6. **IBM stack** (10s) — hit `/ibm-status` on camera, then the Bob evidence screenshots
+Why → How → Demo → Impact, one clean creative flow — **pre-recorded and edited, never live against a running API.**
+
+1. **Hook** (10s) — a creator's real work in; a polished portfolio in their own language out; no invented credits.
+2. **The problem, for creators** (30s) — brilliant work, no bio, no English, no budget for a translator or designer — and generic AI that would paper over it with fabricated superlatives.
+3. **Hero demo** (75s) — real creative input → generated portfolio → the same portfolio re-rendered live from one language into another. This is the show.
+4. **The authenticity beat** (25s) — a generic prompt inventing a fake award, then MuseForge omitting it: FactLock protecting the creator's real voice, on camera.
+5. **Impact + future** (20s) — one concrete creator who can now present globally, in their own language, with nothing fabricated.
 
 **Full script:** [`docs/DEMO_VIDEO_SCRIPT_FACTLOCK_FIRST.md`](docs/DEMO_VIDEO_SCRIPT_FACTLOCK_FIRST.md)
 
@@ -752,9 +755,9 @@ Full write-up: [`docs/IBM_BOB_EVIDENCE.md`](docs/IBM_BOB_EVIDENCE.md) · Invento
 
 ## 🌍 Real-World Impact
 
-- **Who it is for:** working creators and new graduates who have real output and no presentable identity — the illustrator with forty finished pieces and no site, the CS student with three real projects and a CV nobody reads.
-- **Why FactLock matters commercially:** a fabricated credit can end a commission, a grant application or a job offer. Trust is precisely why AI portfolio tools have not been adopted by the people whose reputation *is* the product.
-- **Why multilingual matters:** presenting in your own language is not a localisation nicety for a creator in Lahore or São Paulo. It is the difference between applying and not applying.
+- **Who it is for:** working creators who have real output and no presentable identity — the illustrator with forty finished pieces and no site, the musician with recordings and no press page, the writer with a body of work and no bio. New graduates with real projects and an unread CV are served by the same engine through the Student / Job Seeker path.
+- **Why the authenticity guarantee matters:** a fabricated credit can end a commission, a grant or a job offer — and generic AI filler quietly signals that a creator didn't care enough to sound like themselves. Voice and trust are precisely why the people whose reputation *is* their product have not adopted AI portfolio tools. FactLock is built for exactly them.
+- **Why multilingual matters:** presenting in your own language is not a localisation nicety for a creator in Lahore or São Paulo. It is the difference between reaching a global audience and staying invisible.
 
 ---
 
