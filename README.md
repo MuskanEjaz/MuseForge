@@ -28,7 +28,7 @@
 | | |
 |---|---|
 | 🚀 **Live app** | **https://muse-forge.vercel.app/** |
-| 🎬 **Demo video (3 min)** | `LINK COMING SOON` |
+| | 🎬 **Demo video** | **https://youtu.be/4JBoOCmW4Io** |
 | 🩺 **Verify the IBM stack in one request** | `GET /ibm-status` — see [live output below](#1-the-ibm-stack-proves-itself) |
 | 🧾 **IBM Bob evidence** | [`docs/IBM_BOB_EVIDENCE.md`](docs/IBM_BOB_EVIDENCE.md) — 17 organised screenshots |
 
