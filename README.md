@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://muse-forge.vercel.app/"><img src="https://img.shields.io/badge/LIVE-muse--forge.vercel.app-16a34a?style=for-the-badge&logo=vercel&logoColor=white" alt="Live app" /></a>
-  <img src="https://img.shields.io/badge/DEMO%20VIDEO-Link%20Coming%20Soon-6d28d9?style=for-the-badge&logo=youtube&logoColor=white" alt="Demo video coming soon" />
+  <a href="https://youtu.be/4JBoOCmW4Io"><img src="https://img.shields.io/badge/DEMO%20VIDEO-Watch%20on%20YouTube-6d28d9?style=for-the-badge&logo=youtube&logoColor=white" alt="Demo video" /></a>
 </p>
 
 <p align="center">
