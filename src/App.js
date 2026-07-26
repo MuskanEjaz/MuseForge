@@ -1758,6 +1758,18 @@ function App() {
   }, [profileMenuOpen]);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [authUser, setAuthUser] = useState(() => storedAuth.user || null);
+
+  // Auto-close the profile dropdown 4 seconds after it opens.
+  useEffect(() => {
+    if (!profileMenuOpen) return undefined;
+    const timer = setTimeout(() => setProfileMenuOpen(false), 4000);
+    return () => clearTimeout(timer);
+  }, [profileMenuOpen]);
+
+  // Always keep it closed on login / whenever the signed-in user changes.
+  useEffect(() => {
+    setProfileMenuOpen(false);
+  }, [authUser]);
   const [authLoading, setAuthLoading] = useState(Boolean(authLink.verifyToken));
   const [authError, setAuthError] = useState('');
   const [authNotice, setAuthNotice] = useState('');
