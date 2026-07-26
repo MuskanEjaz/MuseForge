@@ -144,10 +144,10 @@ The Student/Job Seeker path supports PDF CV upload with:
 - **IBM Docling** structure-aware extraction via `POST /v1/convert/file` (with `/v1alpha` fallback), running as `docling-serve` with RapidOCR models
 - **Best-extraction selection** — Docling output is scored against a local parser and the stronger result wins (`parseBestCv`), with the decision logged: `CV parse: chose {"source":"docling","scores":{"docling":8,"local":8}}`
 - **Multilingual fuzzy heading detection** — `SKILLS & TOOLS`, `KEY PROJECTS`, `WORK HISTORY`, headings split across two PDF lines, headings with trailing content on the same line, and non-English headings are all recognised
-- **Embedded link routing** — verification links inside the PDF are matched to the item they actually belong to
+- **Embedded link routing** — verification links are pulled directly from the PDF's own `/URI` annotations (both literal and hex-encoded formats), sorted into reading order, and matched to the item they actually belong to — a GitHub link next to a project attaches to *that* project, not to whatever line happened to be nearby. No manual re-linking, no copy-paste.
 - **Honest failure** — `cv-readability.js` classifies a document as unreadable for three concrete reasons: `empty` (no lines), `shattered-glyphs` (single-glyph ratio ≥ 0.35, typical of stylised or scanned scripts), and `collapsed-text-no-structure` (no structure, ≤ 2 lines, ≥ 20 dominant words). MuseForge then **tells the user** instead of quietly generating a hollow portfolio from noise
 
-A tool that admits failure is worth more than one that always returns something.
+> 🎬 **See it in action:** <PASTE CV DEMO VIDEO LINK> — a real PDF CV going in, its sections and embedded links coming out mapped to the right places.
 
 ### 4. Public Portfolio Links
 
