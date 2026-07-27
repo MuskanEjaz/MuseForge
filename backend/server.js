@@ -5688,7 +5688,7 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-if (require.main === module) {
+{
   process.on('unhandledRejection', error => {
     console.error('Unhandled promise rejection:', error);
   });
@@ -5809,10 +5809,12 @@ Return ONLY valid JSON in this exact format:
 });
 
 
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+   if (require.main === module) {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  }
 }
 
-module.exports = {
+Object.assign(app, {
   app,
   sendWelcomeEmail,
   sendVerificationEmail,
@@ -5845,4 +5847,6 @@ module.exports = {
     looksLikeWrongEnglishForTarget,
     languageFamily,
   },
-};
+});
+
+module.exports = app;
