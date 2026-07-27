@@ -3,6 +3,7 @@ const { assessCvReadability, UNREADABLE_CV_MESSAGE } = require('./cv-readability
 const cors = require('cors');
 const multer = require('multer');
 const { PdfReader } = require('pdfreader');
+require('@napi-rs/canvas');
 const { PDFParse } = require('pdf-parse');
 const Groq = require('groq-sdk');
 const OpenAI = require('openai');
