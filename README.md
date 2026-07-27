@@ -713,7 +713,7 @@ Full write-up: [`docs/IBM_BOB_EVIDENCE.md`](docs/IBM_BOB_EVIDENCE.md) · Invento
 | Public GitHub repository | ✅ Complete | Clean codebase with proper `.gitignore` |
 | README with problem, solution, AI approach, theme, Bob usage | ✅ Complete | This document |
 | Live deployment | ✅ Complete | https://muse-forge.vercel.app/ |
-| Demo video (≤ 3 minutes) | 🎬 Link coming soon | Script in `docs/DEMO_VIDEO_SCRIPT_FACTLOCK_FIRST.md` |
+| Demo video (≤ 3 minutes) | ✅ Complete | [Watch on YouTube](https://youtu.be/4JBoOCmW4Io) |
 | Security implementation | ✅ Complete | Helmet · tiered rate limiting · input validation · upload security · CORS allowlist |
 | Testing coverage | ✅ Complete | 20+ suites: FactLock, adversarial, language, CV parsing, Docling, COS, IBM status, auth |
 
