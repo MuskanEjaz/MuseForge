@@ -6,3 +6,7 @@ Activate Docling environment :
 
 Start Docling :
 docling-serve run --enable-ui
+
+
+.\.docling-venv\Scripts\Activate.ps1
+docling-serve run --enable-ui

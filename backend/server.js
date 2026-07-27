@@ -5649,6 +5649,23 @@ app.get('/user-history', async (req, res) => {
   }
 });
 
+app.get('/user-history/:email', async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email || '');
+    return res.json({ history: readUserHistoryForEmail(email) });
+  } catch (error) {
+    return res.status(500).json({ error: 'Could not read user history.' });
+  }
+});
+
+app.get('/reviews', async (req, res) => {
+  try {
+    return res.json({ reviews: [] });
+  } catch (error) {
+    return res.status(500).json({ error: 'Could not read reviews.' });
+  }
+});
+
 // Error handling middleware for multer
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
