@@ -281,7 +281,7 @@ Star ratings (1–5), written feedback, moderation, and public display on portfo
 | **LangChain `@langchain/ibm`** (`ChatWatsonx`) | Model orchestration path, `LANGCHAIN_ENABLED=true` / `AI_PROVIDER=langchain`; loaded via dynamic ESM import and cached | Standard orchestration without leaving the IBM path. If the package is absent it falls back to the direct watsonx call, so the pipeline never dies on a missing dependency |
 | **IBM Cloud IAM** | Bearer tokens for watsonx and COS, minted from an IBM Cloud API key and cached until 60 seconds before expiry | One token per hour, not one per generation |
 
-**Provider policy, stated plainly.** Granite on watsonx is the **primary and default model**: `selectAiProvider()` returns `watsonx` first whenever watsonx credentials are present. This deployment runs with `WATSONX_STRICT=true`, which means **no non-IBM model can be reached at all** — if Granite were unavailable, generation would fail rather than silently fall back. The live probe below reports `"strictIbmMode":true`.
+**Provider policy, stated plainly.** Granite on watsonx is the **primary and default model**: `selectAiProvider()` returns `watsonx` first whenever watsonx credentials are present, and MuseForge was built and tested against watsonx throughout. Setting `WATSONX_STRICT=true` guarantees **no non-IBM model can be reached at all** — if Granite were unavailable, generation would fail rather than silently fall back. The public demo currently runs on the Groq fallback because the developer's watsonx trial credits are exhausted; supply your own watsonx credentials and set `WATSONX_STRICT=true` to run the IBM-only path and verify it via `/ibm-status`.
 
 ---
 
@@ -295,7 +295,7 @@ Nothing in this README is asserted without something you can run.
 curl http://localhost:5000/ibm-status
 ```
 
-Real response from this project:
+Response from the local development environment, with watsonx credentials configured:
 
 ```json
 {
@@ -308,7 +308,7 @@ Real response from this project:
 }
 ```
 
-Booleans and public config only — never secrets. `doclingReachable` is a live probe, so it reports `false` when `docling-serve` is not currently running and `true` when it is. `strictIbmMode: true` is the important one: it means no non-IBM model can serve a request.
+Booleans and public config only — never secrets. Each field is a live probe: with your own watsonx key set, `watsonxConfigured` and `strictIbmMode` report `true`; on the public Groq-fallback demo they report `false`, which is the probe honestly reflecting that deployment's configuration rather than a claim. `doclingReachable` reports `true` only when `docling-serve` is running locally. This transparency is the point — the endpoint always tells you exactly what is wired in.
 
 Covered by `test-ibm-status.js`.
 
@@ -433,7 +433,7 @@ npm run build                    # production build
 - **pdf-parse** / **pdfreader** / **pdfjs-dist** — local PDF fallback parsing and embedded link extraction
 - **Nodemailer** — email notifications
 - **google-auth-library** — token verification
-- **Groq / OpenAI / Gemini SDKs** — availability fallbacks, disabled entirely under `WATSONX_STRICT=true`
+- **Groq / OpenAI / Gemini SDKs** — availability fallbacks, disabled entirely under `WATSONX_STRICT=true`; the public demo runs on the Groq fallback while watsonx credits are replenished
 - **Supabase** — production persistent storage, with local JSON fallback
 
 ### Security
@@ -549,7 +549,7 @@ WATSONX_API_KEY=your_ibm_cloud_api_key
 WATSONX_PROJECT_ID=your_watsonx_project_id
 WATSONX_URL=https://us-south.ml.cloud.ibm.com
 WATSONX_MODEL=ibm/granite-3-8b-instruct
-WATSONX_STRICT=true           # no non-IBM model can be reached
+WATSONX_STRICT=true           # IBM-only: no non-IBM model can be reached (set this to run the watsonx path)
 AI_PROVIDER=watsonx
 LANGCHAIN_ENABLED=true        # route through @langchain/ibm ChatWatsonx
 
@@ -712,7 +712,7 @@ Full write-up: [`docs/IBM_BOB_EVIDENCE.md`](docs/IBM_BOB_EVIDENCE.md) · Invento
 | IBM technologies used | ✅ Complete | Granite / watsonx.ai · Docling · Cloud Object Storage · Cloud IAM · LangChain `@langchain/ibm` · IBM Bob |
 | Public GitHub repository | ✅ Complete | Clean codebase with proper `.gitignore` |
 | README with problem, solution, AI approach, theme, Bob usage | ✅ Complete | This document |
-| Live deployment | ✅ Complete | https://muse-forge.vercel.app/ |
+| Live deployment | ✅ Complete (Groq-fallback demo) | https://muse-forge.vercel.app/ — runs on watsonx with your own key |
 | Demo video (≤ 3 minutes) | ✅ Complete | [Watch on YouTube](https://youtu.be/4JBoOCmW4Io) |
 | Security implementation | ✅ Complete | Helmet · tiered rate limiting · input validation · upload security · CORS allowlist |
 | Testing coverage | ✅ Complete | 20+ suites: FactLock, adversarial, language, CV parsing, Docling, COS, IBM status, auth |
@@ -720,7 +720,7 @@ Full write-up: [`docs/IBM_BOB_EVIDENCE.md`](docs/IBM_BOB_EVIDENCE.md) · Invento
 ### 🎯 Competitive advantages
 
 1. **FactLock is enforcement, not a prompt.** Seven structural gates in code that reject the model's own output — including a script-agnostic invented-number guard and a 40-term credential guard. Most "anti-hallucination" projects ship an instruction and hope.
-2. **The IBM stack is verifiable, not decorative.** `GET /ibm-status` proves it in one request, `WATSONX_STRICT=true` proves the model, and `verify-cos.js` proves the storage with a live read/write round-trip.
+2. **The IBM stack is verifiable, not decorative.** `GET /ibm-status` reports exactly what is configured, `WATSONX_STRICT=true` enforces the IBM-only path, and `verify-cos.js` proves the storage with a live read/write round-trip. The endpoint reports the truth on every deployment — including honestly showing the public demo's Groq fallback.
 3. **A generative product that admits failure.** Unreadable CV → say so, with a named reason. Model unreachable → deterministic localised draft in the correct language. Rate limited → cooldown and fallback, never a crash.
 4. **Multilingual all the way down** — headings, labels and creative field, not just body text, with dictionary fallbacks that survive model outages and multilingual CV heading detection on the way in.
 5. **Six creator-specific workflows** rather than one generic form.
@@ -745,7 +745,7 @@ Why → How → Demo → Impact, one clean creative flow — **pre-recorded and 
 
 ## 🧱 Feasibility
 
-- **Already deployed**, not a notebook: React frontend on Vercel, Node/Express backend, running against live watsonx.
+- **Already deployed**, not a notebook: React frontend on Vercel, Node/Express backend. Built and tested against watsonx; the public demo runs on the Groq fallback while watsonx credits are replenished, and switches to the IBM-only path with your own key.
 - **Degrades instead of dying.** No Docling → local PDF parsing. Model unreachable → deterministic localised draft, still in the right language. Rate limited → cooldown and fallback. LangChain package missing → direct watsonx call. COS key missing → local fallback.
 - **Cheap per portfolio.** An 8B instruct model over a handful of short, constrained prompts — not a frontier model rewriting an entire document. This is what makes it viable for creators who cannot pay much.
 - **No lock-in.** Portfolios export as standalone HTML and publish as a public share link.
