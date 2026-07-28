@@ -5661,9 +5661,20 @@ app.get('/user-history/:email', async (req, res) => {
 
 app.get('/reviews', async (req, res) => {
   try {
-    return res.json({ reviews: [] });
+    const reviews = await getReviews();
+    return res.json({ reviews });
   } catch (error) {
-    return res.status(500).json({ error: 'Could not read reviews.' });
+    return res.json({ reviews: [] });
+  }
+});
+
+app.post('/reviews', aiLimiter, async (req, res) => {
+  try {
+    const saved = await saveReview(req.body || {});
+    return res.status(201).json({ review: saved });
+  } catch (error) {
+    const code = error.statusCode || 500;
+    return res.status(code).json({ error: error.message || 'Could not submit review.' });
   }
 });
 
