@@ -3406,7 +3406,7 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     .section p { color: var(--mf-body); line-height: 1.9; font-size: 0.96rem; margin-bottom: 14px; font-weight: 300; }
     .custom-items { display: flex; flex-direction: column; gap: 14px; }
     .custom-item { background: var(--mf-card); backdrop-filter: blur(10px); border-radius: 14px; padding: 18px 22px; border: 1px solid var(--mf-border); }
-    .custom-item-heading { color: var(--mf-title); font-size: 1rem; font-weight: 600; margin-bottom: 4px; font-family: 'Inter', sans-serif; }
+    .custom-item-heading { color: var(--mf-subheading); font-size: 1.12rem; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.01em; font-family: 'Inter', sans-serif; }
     .custom-item-desc { color: var(--mf-muted); font-size: 0.92rem; line-height: 1.7; }
     .projects { display: grid; gap: 18px; }
     .project-card { background: var(--mf-card); backdrop-filter: blur(10px); border: 1px solid var(--mf-border); border-radius: 16px; padding: 24px; display: grid; grid-template-columns: 44px 1fr; gap: 18px; transition: border-color 0.2s, transform .2s ease; }
