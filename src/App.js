@@ -234,8 +234,8 @@ const DEFAULT_EXPORT_SETTINGS = {
   portfolioFont: 'current',
   customFont: '',
   template: 'default',
-  headingColor: '#44077d',
-  subheadingColor: '#9640e7',
+  headingColor: '#a855f7',
+  subheadingColor: '#ec4899',
   headingFont: 'Playfair Display',
   bodyColor: '#cccccc',
   bodyFont: 'Times New Roman',
@@ -3413,7 +3413,7 @@ if (finalPortfolioText || data.portfolio) savePortfolioVersion('Reviewed portfol
     .project-card:hover { border-color: var(--mf-heading); transform: translateY(-2px); }
     .project-number { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--mf-subheading); font-weight: 700; display: flex; align-items: flex-start; padding-top: 3px; }
     .project-title-row { margin-bottom: 6px; }
-    .project-title { color: var(--mf-title); font-size: 1.1rem; font-weight: 700; font-family: 'Inter', sans-serif; }
+    .project-title { color: var(--mf-subheading); font-size: 1.1rem; font-weight: 700; font-family: 'Inter', sans-serif; }
     .project-link { text-decoration: none; }
     .custom-heading-link { display: inline-block; text-decoration: none; }
     .custom-heading-link:hover .custom-item-heading { color: #a855f7; }
