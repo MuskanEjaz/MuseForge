@@ -5661,9 +5661,13 @@ app.get('/user-history/:email', async (req, res) => {
 
 app.get('/reviews', async (req, res) => {
   try {
-    return res.json({ reviews: [] });
+    const reviews = await getAllReviews();
+    return res.json({ reviews });
   } catch (error) {
-    return res.status(500).json({ error: 'Could not read reviews.' });
+    console.error('Could not load reviews:', error.message);
+    return res.status(500).json({
+      error: 'Could not load reviews.'
+    });
   }
 });
 
