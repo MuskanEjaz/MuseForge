@@ -5666,7 +5666,7 @@ app.get('/reviews', async (req, res) => {
   } catch (error) {
     console.error('Could not load reviews:', error.message);
     return res.status(500).json({
-      error: 'Could not load reviews.'
+      error: error.message || 'Could not load reviews.'
     });
   }
 });
