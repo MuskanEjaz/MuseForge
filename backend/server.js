@@ -5661,10 +5661,9 @@ app.get('/user-history/:email', async (req, res) => {
 
 app.get('/reviews', async (req, res) => {
   try {
-    const reviews = await getReviews();
-    return res.json({ reviews });
-  } catch (error) {
     return res.json({ reviews: [] });
+  } catch (error) {
+    return res.status(500).json({ error: 'Could not read reviews.' });
   }
 });
 
